@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIT Manipal - CSE Section CC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236d28d9'/%3E%3Cpath fill='white' d='M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z'/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-color-light: #f3f4f6;
+            --text-color-light: #1f2937;
+            --card-bg-light: #ffffff;
+            --header-text-light: #0f172a;
+            --accent-color-light: #6d28d9; /* Violet-700 */
+            --border-color-light: #e5e7eb;
+            --nav-bg-light: #ffffff;
+
+            --bg-color-dark: #111827;
+            --text-color-dark: #d1d5db;
+            --card-bg-dark: #1f2937;
+            --header-text-dark: #f9fafb;
+            --accent-color-dark: #8b5cf6; /* Violet-500 */
+            --border-color-dark: #374151;
+            --nav-bg-dark: #1f2937;
+        }
+
+        .light {
+            --bg-color: var(--bg-color-light);
+            --text-color: var(--text-color-light);
+            --card-bg: var(--card-bg-light);
+            --header-text: var(--header-text-light);
+            --accent-color: var(--accent-color-light);
+            --border-color: var(--border-color-light);
+            --nav-bg: var(--nav-bg-light);
+        }
+
+        .dark {
+            --bg-color: var(--bg-color-dark);
+            --text-color: var(--text-color-dark);
+            --card-bg: var(--card-bg-dark);
+            --header-text: var(--header-text-dark);
+            --accent-color: var(--accent-color-dark);
+            --border-color: var(--border-color-dark);
+            --nav-bg: var(--nav-bg-dark);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .main-content-area {
+            padding-top: 80px; /* Adjust based on nav height */
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .nav-link.active {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        .timetable-table, .calendar-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 100%;
+            background-color: var(--card-bg);
+        }
+        .timetable-table th, .timetable-table td, .calendar-table th, .calendar-table td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        @media (min-width: 640px) {
+             .timetable-table th, .timetable-table td, .calendar-table th, .calendar-table td {
+                font-size: 0.9rem;
+            }
+        }
+        .timetable-table th, .calendar-table th {
+            background-color: var(--bg-color);
+            color: var(--header-text);
+            font-weight: 600;
+        }
+        .timetable-table .time-col {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .timetable-table .lunch { background-color: #d1fae5; }
+        .dark .timetable-table .lunch { background-color: #064e3b; }
+        .timetable-table .break { background-color: #fee2e2; }
+        .dark .timetable-table .break { background-color: #7f1d1d; }
+        
+        .calendar-table td.holiday { background-color: #fef9c3; }
+        .dark .calendar-table td.holiday { background-color: #713f12; }
+        .calendar-table td.exam { background-color: #ffe4e6; }
+        .dark .calendar-table td.exam { background-color: #8c2a32; }
+
+        .calendar-table td.event { background-color: #e0e7ff; }
+        .dark .calendar-table td.event { background-color: #3730a3; }
+
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
+        .modal-content {
+            background-color: var(--card-bg);
+            max-height: 90vh;
+        }
+        .gemini-output h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--header-text);
+        }
+        .gemini-output ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .gemini-output li { margin-bottom: 0.25rem; }
+        .gemini-output strong { color: var(--accent-color); }
+    </style>
+</head>
+<body class="antialiased">
+    <div id="app">
+        <!-- Header & Navigation -->
+        <header class="bg-[var(--nav-bg)] shadow-md fixed w-full top-0 z-50 transition-colors duration-300">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 transition-transform duration-300 ease-in-out hover:-translate-y-0.5 cursor-pointer">
+                             <svg class="h-8 w-8" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="100" height="100" rx="20" fill="var(--accent-color)"/>
+                                <path fill="white" d="M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z"/>
+                            </svg>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <a href="#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</a>
+                                <a href="#timetable" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors">Timetable</a>
+                                <a href="#faculty" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors">Faculty</a>
+                                <a href="#academic-calendar" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors">Calendar</a>
+                                <a href="#study-material" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors">Study Material</a>
+                                <a href="#restaurants" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors">Restaurants</a>
+                                <a href="#gallery" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors">Gallery</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                         <button id="theme-switcher" class="bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)]">
+                            <svg id="theme-icon-sun" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            <svg id="theme-icon-moon" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        </button>
+                    </div>
+                    <div class="-mr-2 flex md:hidden">
+                        <button id="mobile-menu-button" type="button" class="bg-[var(--card-bg)] inline-flex items-center justify-center p-2 rounded-md text-[var(--text-color)] hover:bg-[var(--bg-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--card-bg)] focus:ring-[var(--accent-color)]">
+                            <span class="sr-only">Open main menu</span>
+                            <svg id="menu-open-icon" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            <svg id="menu-close-icon" class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </nav>
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#home" class="nav-link block px-3 py-2 rounded-md text-base font-medium">Home</a>
+                    <a href="#timetable" class="nav-link block px-3 py-2 rounded-md text-base font-medium">Timetable</a>
+                    <a href="#faculty" class="nav-link block px-3 py-2 rounded-md text-base font-medium">Faculty</a>
+                    <a href="#academic-calendar" class="nav-link block px-3 py-2 rounded-md text-base font-medium">Calendar</a>
+                    <a href="#study-material" class="nav-link block px-3 py-2 rounded-md text-base font-medium">Study Material</a>
+                    <a href="#restaurants" class="nav-link block px-3 py-2 rounded-md text-base font-medium">Restaurants</a>
+                    <a href="#gallery" class="nav-link block px-3 py-2 rounded-md text-base font-medium">Gallery</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content-area max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Home Page -->
+            <section id="home" class="page">
+                <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Dashboard</h1>
+                    <p class="text-md mt-1">Deadlines and tasks for Section CC</p>
+                </header>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <section id="quizzes">
+                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Upcoming Quizzes
+                        </h2>
+                        <div class="space-y-4"></div>
+                    </section>
+                    <section id="assignments">
+                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                            Upcoming Assignments
+                        </h2>
+                        <div class="space-y-4"></div>
+                    </section>
+                </div>
+                 <!-- Gemini Study Planner Section -->
+                <section class="lg:col-span-2 mt-8">
+                     <div class="bg-[var(--card-bg)] rounded-lg p-6 shadow-md text-center border border-[var(--border-color)]">
+                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            AI Study Planner
+                        </h2>
+                        <p class="mb-6">Feeling overwhelmed? Let Gemini create a personalized study plan based on your upcoming deadlines.</p>
+                        <button id="generate-plan-btn" class="bg-[var(--accent-color)] text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center mx-auto">
+                           ✨ Generate Study Plan
+                        </button>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Timetable Page -->
+            <section id="timetable" class="page">
+                 <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Class Timetable</h1>
+                    <p class="text-md mt-1">July - Nov 2025 | Semester I, Section CC (Stream: CSE)</p>
+                </header>
+                 <div class="overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                    <table class="timetable-table">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>08:00 - 09:00</th>
+                                <th>09:00 - 10:00</th>
+                                <th>10:00 - 10:30</th>
+                                <th>10:30 - 11:30</th>
+                                <th>11:30 - 12:30</th>
+                                <th>12:30 - 01:00</th>
+                                <th>01:00 - 02:00</th>
+                                <th>02:00 - 03:00</th>
+                                <th>03:00 - 03:30</th>
+                                <th>03:30 - 04:30</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="time-col">MON</td>
+                                <td colspan="2">EVS (P)<br>(SGS)</td>
+                                <td class="break">Break</td>
+                                <td colspan="2">MATHS<br>(SME)</td>
+                                <td class="lunch" rowspan="6">Lunch Break</td>
+                                <td colspan="4" rowspan="2">CAEG LAB (2:00 - 5:00 PM)<br>[CC1: AB1 328; CC2: AB 331]</td>
+                            </tr>
+                            <tr>
+                                <td class="time-col">TUE</td>
+                                <td colspan="2"></td>
+                                <td class="break">Break</td>
+                                <td colspan="2">EMSB<br>(BS)</td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">WED</td>
+                                <td>MATHS<br>(SME)</td>
+                                <td>EMSB<br>(BS)</td>
+                                <td class="break">Break</td>
+                                <td>FEE<br>(AN)</td>
+                                <td>PPS<br>(TS)</td>
+                                <td>FEE<br>(AN)</td>
+                                <td class="break">Break</td>
+                                <td colspan="2">CHEM<br>(SA)</td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">THU</td>
+                                <td colspan="2"></td>
+                                <td class="break">Break</td>
+                                <td colspan="2">CHEM<br>(SA)</td>
+                                <td>PPS<br>(TS)</td>
+                                <td class="break">Break</td>
+                                <td colspan="2">EVS (L)<br>(SGS)</td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">FRI</td>
+                                <td>FEE<br>(AN)</td>
+                                <td>CHEM<br>(SA)</td>
+                                <td class="break">Break</td>
+                                <td>PPS<br>(TS)</td>
+                                <td>MATHS<br>(SME)</td>
+                                <td colspan="4"></td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">SAT</td>
+                                <td colspan="2">PPS LAB<br>(AB1 129)</td>
+                                <td class="break">Break</td>
+                                <td colspan="2"></td>
+                                <td>MATHS<br>(SME)</td>
+                                <td class="break">Break</td>
+                                <td colspan="2">EMSB<br>(BS)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <div class="mt-6 overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                     <table class="timetable-table">
+                         <thead>
+                             <tr>
+                                <th colspan="3">Mandatory Learning Courses</th>
+                             </tr>
+                             <tr>
+                                 <th>Course</th>
+                                 <th>Day</th>
+                                 <th>Time & Mode</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                            <tr>
+                                <td>CPI</td>
+                                <td>FRIDAY</td>
+                                <td>5:00 - 6:30 PM (ONLINE - MS TEAMS)</td>
+                            </tr>
+                         </tbody>
+                     </table>
+                </div>
+            </section>
+
+            <!-- Faculty Page -->
+            <section id="faculty" class="page">
+                <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Faculty Details</h1>
+                    <p class="text-md mt-1">Contact information for Section CC faculty.</p>
+                </header>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Faculty cards will be injected here -->
+                </div>
+            </section>
+            
+            <!-- Academic Calendar Page -->
+            <section id="academic-calendar" class="page">
+                <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Academic Calendar 2025-26</h1>
+                    <p class="text-md mt-1">Official calendar for Odd and Even semesters.</p>
+                </header>
+                <div class="space-y-12">
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)]">Odd Semester (July - December 2025)</h2>
+                        <div class="overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                            <table class="calendar-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>July</th>
+                                        <th>August</th>
+                                        <th>September</th>
+                                        <th>October</th>
+                                        <th>November</th>
+                                        <th>December</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr> <td>1-8</td> <td></td> <td></td> <td></td> <td>1: Maha Navami</td> <td>1: Karnataka Rajyotsava</td> <td>1: Winter Labs Start</td> </tr>
+                                    <tr> <td>9-16</td> <td>11-12: Doc Verification</td> <td class="holiday">15: Independence Day<br>16: Holiday (Third Sat)</td> <td>12-13: Mid-term Exam</td> <td class="event">10: Tech Tatva</td> <td class="holiday">15: Holiday (Third Sat)</td> <td>13: Exam Results</td> </tr>
+                                    <tr> <td>17-24</td> <td>19: Holiday (Third Sat)<br>22: First Class Committee</td> <td></td> <td class="holiday">20: Holiday (Third Sat)</td> <td class="holiday">18: Holiday (Third Sat)<br>20: Deepavali</td> <td>17: End Sem Exams Start</td> <td>19: Makeup Exams Start<br><span class="holiday">20: Holiday (Third Sat)</span></td> </tr>
+                                    <tr> <td>25-31</td> <td>25: Friday Timetable</td> <td></td> <td></td> <td></td> <td class="exam">29: End Sem Exam End</td> <td>25: Christmas</td> </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)]">Even Semester (January - May 2026)</h2>
+                        <div class="overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                           <table class="calendar-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>January</th>
+                                        <th>February</th>
+                                        <th>March</th>
+                                        <th>April</th>
+                                        <th>May</th>
+                                        <th>June</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr> <td>1-8</td> <td></td> <td>6: First Class Committee</td> <td>4: Holi</td> <td class="holiday">1: May Day</td> <td>2: End Sem Exam Start</td> <td>1: End Sem Results</td> </tr>
+                                    <tr> <td>9-16</td> <td></td> <td></td> <td>6-7: Mid-term Exam</td> <td>9-11: UTSAV</td> <td class="holiday">16: Holiday (Third Sat)</td> <td>8: Makeup Exams Start</td> </tr>
+                                    <tr> <td>17-24</td> <td class="holiday">17: Holiday (Third Sat)</td> <td class="holiday">21: Holiday (Third Sat)</td> <td>10-11: Mid-term Exam<br><span class="holiday">21: Holiday (Third Sat)</span></td> <td class="holiday">18: Holiday (Third Sat)</td> <td class="exam">19: Last working Day</td> <td class="holiday">20: Holiday (Third Sat)</td> </tr>
+                                    <tr> <td>25-31</td> <td class="holiday">26: Republic Day</td> <td></td> <td class="event">26-27: Revels</td> <td>30: Finalizing IA marks</td> <td></td> <td></td> </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Study Material Page -->
+            <section id="study-material" class="page">
+                 <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Study Material</h1>
+                </header>
+                <div class="flex items-center justify-center h-96 bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)]">
+                    <h2 class="text-5xl font-bold text-[var(--accent-color)] opacity-75 animate-pulse">Coming Soon</h2>
+                </div>
+            </section>
+
+            <!-- Restaurants Page -->
+            <section id="restaurants" class="page">
+                <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Nearby Restaurants</h1>
+                    <p class="text-md mt-1">Contact list for local food joints.</p>
+                </header>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Restaurant cards will be injected here -->
+                </div>
+            </section>
+
+            <!-- Gallery Page -->
+            <section id="gallery" class="page">
+                 <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Class Gallery</h1>
+                    <p class="text-md mt-1">Bas yaadein hi reh jaegi</p>
+                </header>
+                <div class="flex items-center justify-center h-96 bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)]">
+                    <h2 class="text-5xl font-bold text-[var(--accent-color)] opacity-75 animate-pulse">Coming Soon</h2>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center py-6 border-t border-[var(--border-color)] mt-12">
+            <p class="text-sm text-[var(--text-color)]">Built by Mohammad Shoaib Khan</p>
+        </footer>
+    </div>
+    
+    <!-- Modals -->
+    <div id="study-plan-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="modal-content w-full max-w-2xl rounded-lg shadow-2xl p-6 relative overflow-y-auto">
+            <button class="close-modal-btn absolute top-4 right-4 text-[var(--text-color)] hover:opacity-75 transition-opacity">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-[var(--header-text)] mb-4">Your AI-Generated Study Plan</h2>
+            <div class="gemini-output"></div>
+        </div>
+    </div>
+    
+    <div id="email-draft-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+         <div class="modal-content w-full max-w-2xl rounded-lg shadow-2xl p-6 relative">
+             <button class="close-modal-btn absolute top-4 right-4 text-[var(--text-color)] hover:opacity-75 transition-opacity">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+             </button>
+             <h2 class="text-2xl font-bold text-[var(--header-text)] mb-4">AI Email Assistant</h2>
+             <p class="mb-4">To: <span id="email-faculty-name" class="font-semibold"></span></p>
+             <div class="space-y-4">
+                <label for="email-purpose" class="block text-sm font-medium">What is the purpose of your email?</label>
+                <input type="text" id="email-purpose" class="w-full p-2 rounded-md bg-[var(--bg-color)] border border-[var(--border-color)]" placeholder="e.g., Requesting an extension for the assignment">
+                <button id="generate-email-btn" class="bg-[var(--accent-color)] text-white font-bold py-2 px-4 rounded-lg shadow-md hover:opacity-90 transition-opacity w-full">✨ Generate Draft</button>
+                <hr class="border-[var(--border-color)]">
+                <div class="gemini-output"></div>
+             </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DATA ---
+            const assignments = [
+                { subject: 'FEE', title: 'Magnetism', dueDate: '2025-10-11' },
+            ];
+
+            const quizzes = [
+                { subject: 'Chemistry', title: 'Virtual Labs (7:30 PM)', dueDate: '2025-10-22' },
+            ];
+
+             const faculty = [
+                { name: 'Sandeep Sir', subject: 'EVS', contact: '9164489836', cabin: 'AB2 Basement Floor', email: 'sandeep.gs@manipal.edu' },
+                { name: 'Shobha Ma\'am', subject: 'Maths', contact: '9591474101', cabin: 'N/A', email: 'N/A' },
+                { name: 'Sowmya Ma\'am', subject: 'Chem', contact: '9686781587', cabin: 'N/A', email: 'sowmya.achar@manipal.edu' },
+                { name: 'Anandh Sir', subject: 'FEE', contact: '9787934850', cabin: 'N/A', email: 'anandh.n@manipal.edu' },
+                { name: 'Bhagyashree Ma\'am', subject: 'EMSB', contact: '8277511547', cabin: 'AB2', email: 'bhagyalaxmi.kh@manipal.edu' },
+                { name: 'Sujithra Ma\'am', subject: 'PPS', contact: '9047756324', cabin: 'N/A', email: 't.sujithra@manipal.edu' },
+            ];
+            const restaurants = [
+                { name: 'Taco House', contact: '+91 7795815315' },
+                { name: 'Hungry House', contact: '+91 9820243177' },
+                { name: 'MFC', contact: '+91 7338334970' },
+                { name: 'Hit & Run', contact: '+91 7406330088' },
+                { name: 'Janani Canteen', contact: '+91 8660138488' },
+                { name: 'Dollar Cafe', contact: '+91 8105306109' },
+                { name: 'Kamath Cafe', contact: '+91 8217044886' },
+                { name: 'Aditya Mess', contact: '+91 7483644586' },
+                { name: 'Apoorva Mess', contact: '+91 9108888320' },
+                { name: 'FC 2', contact: '+91 8861953102' },
+                { name: 'Poornima', contact: '+91 7090641985' },
+                { name: 'Nom Nom cafe', contact: '+91 7619422026' },
+                { name: 'Ashraya', contact: '+91 6361201519' },
+            ];
+            const today = new Date();
+
+            // --- THEME SWITCHER ---
+            const themeSwitcher = document.getElementById('theme-switcher');
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.remove('light');
+                    document.documentElement.classList.add('dark');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+            };
+            
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
+            themeSwitcher.addEventListener('click', () => {
+                const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            });
+            
+            // --- ROUTING / PAGE NAVIGATION ---
+            const pages = document.querySelectorAll('.page');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileMenuBtn = document.getElementById('mobile-menu-button');
+            const menuOpenIcon = document.getElementById('menu-open-icon');
+            const menuCloseIcon = document.getElementById('menu-close-icon');
+
+            const showPage = (hash) => {
+                const pageId = hash ? hash.substring(1) : 'home';
+                pages.forEach(page => {
+                    page.classList.toggle('active', page.id === pageId);
+                });
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.hash === hash || (hash === '' && link.hash === '#home'));
+                });
+                window.scrollTo(0, 0); // Scroll to top on page change
+                mobileMenu.classList.add('hidden');
+                menuOpenIcon.classList.remove('hidden');
+                menuCloseIcon.classList.add('hidden');
+            };
+
+            navLinks.forEach(link => link.addEventListener('click', (e) => showPage(e.currentTarget.hash)));
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                menuOpenIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('hidden');
+            });
+            window.addEventListener('hashchange', () => showPage(window.location.hash));
+            showPage(window.location.hash || '#home');
+
+
+            // --- DYNAMIC CONTENT RENDERING ---
+            const renderDeadlineCards = () => {
+                const assignmentsContainer = document.querySelector('#assignments .space-y-4');
+                const quizzesContainer = document.querySelector('#quizzes .space-y-4');
+                assignmentsContainer.innerHTML = '';
+                quizzesContainer.innerHTML = '';
+
+                const getDaysRemaining = (dueDate) => {
+                    const due = new Date(dueDate);
+                    // Set time to the end of the day for accurate day counting
+                    due.setHours(23, 59, 59, 999);
+                    const diffTime = due.getTime() - today.getTime();
+                    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                };
+
+                const createCard = (item) => {
+                    const daysLeft = getDaysRemaining(item.dueDate);
+                    let daysText, daysColorClass;
+                    
+                    if (daysLeft < 0) { 
+                        daysText = 'Overdue'; 
+                        daysColorClass = 'bg-red-500 text-white'; 
+                    } else if (daysLeft === 0) { 
+                        daysText = 'Due Today'; 
+                        daysColorClass = 'bg-red-500 text-white'; 
+                    } else if (daysLeft === 1) { 
+                        daysText = 'Due Tomorrow'; 
+                        daysColorClass = 'bg-orange-500 text-white'; 
+                    } else { 
+                        daysText = `${daysLeft} days left`; 
+                        daysColorClass = 'bg-green-600 text-white'; 
+                    }
+                    
+                    const formattedDate = new Date(item.dueDate).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                    return `
+                        <div class="bg-[var(--card-bg)] rounded-lg p-4 shadow-md border border-[var(--border-color)]">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-lg text-[var(--header-text)]">${item.subject}</p>
+                                    <p class="text-md">${item.title}</p>
+                                </div>
+                                <span class="text-xs font-semibold px-3 py-1 rounded-full ${daysColorClass}">${daysText}</span>
+                            </div>
+                            <p class="text-sm mt-3 opacity-80">Due: ${formattedDate}</p>
+                        </div>`;
+                };
+
+                assignments
+                    .filter(ass => getDaysRemaining(ass.dueDate) >= -1)
+                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                    .forEach(ass => {
+                        assignmentsContainer.innerHTML += createCard(ass);
+                    });
+                
+                quizzes
+                    .filter(quiz => getDaysRemaining(quiz.dueDate) >= -1)
+                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                    .forEach(quiz => {
+                        quizzesContainer.innerHTML += createCard(quiz);
+                    });
+            };
+
+            const renderFacultyCards = () => {
+                const container = document.querySelector('#faculty .grid');
+                container.innerHTML = '';
+                faculty.forEach(f => {
+                    container.innerHTML += `
+                        <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)] flex flex-col">
+                            <h3 class="text-xl font-bold text-[var(--header-text)]">${f.name}</h3>
+                            <p class="text-[var(--accent-color)] font-semibold">${f.subject}</p>
+                            <div class="mt-4 space-y-2 text-sm flex-grow">
+                                <p class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
+                                    ${f.contact}
+                                </p>
+                                <p class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                                    ${f.cabin}
+                                </p>
+                                <a href="${f.email !== 'N/A' ? 'mailto:' + f.email : '#'}" class="flex items-center ${f.email !== 'N/A' ? 'hover:underline text-[var(--accent-color)]' : 'cursor-default'}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>
+                                    ${f.email}
+                                </a>
+                            </div>
+                            <button class="draft-email-btn mt-4 w-full bg-[var(--accent-color)] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity" data-faculty-name="${f.name}" data-faculty-subject="${f.subject}">✨ Draft Email</button>
+                        </div>
+                    `;
+                });
+                document.querySelectorAll('.draft-email-btn').forEach(btn => btn.addEventListener('click', openEmailModal));
+            };
+
+            const renderRestaurantCards = () => {
+                const container = document.querySelector('#restaurants .grid');
+                if (!container) return;
+                container.innerHTML = '';
+                restaurants.forEach(r => {
+                    container.innerHTML += `
+                        <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)]">
+                            <h3 class="text-xl font-bold text-[var(--header-text)]">${r.name}</h3>
+                            <div class="mt-2 text-sm">
+                                <a href="tel:${r.contact}" class="flex items-center text-[var(--accent-color)] hover:underline">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
+                                    ${r.contact}
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+            };
+
+            renderDeadlineCards();
+            renderFacultyCards();
+            renderRestaurantCards();
+
+            // --- GEMINI API & MODAL LOGIC ---
+            const studyPlanModal = document.getElementById('study-plan-modal');
+            const emailDraftModal = document.getElementById('email-draft-modal');
+            const generatePlanBtn = document.getElementById('generate-plan-btn');
+            
+            const openModal = (modal) => modal.classList.remove('hidden');
+            const closeModal = (modal) => modal.classList.add('hidden');
+
+            document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => closeModal(e.target.closest('.modal-backdrop'))));
+            document.querySelectorAll('.modal-backdrop').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); }));
+            
+            const loadingHTML = `<div class="flex justify-center items-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-4" style="border-color: var(--accent-color);"></div></div>`;
+            const errorHTML = (msg) => `<p class="text-red-500">Sorry, an error occurred: ${msg}. Please try again later.</p>`;
+
+            // -- Study Planner
+            generatePlanBtn.addEventListener('click', () => {
+                openModal(studyPlanModal);
+                generateStudyPlan();
+            });
+
+            function simpleMarkdownToHtml(markdown) {
+                return markdown
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+                    .replace(/\* (.*?)\n/g, '<li>$1</li>')
+                    .replace(/(\<li\>.*?\<\/li\>)/gs, '<ul>$1</ul>');
+            }
+            
+            async function callGemini(userQuery) {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: userQuery }] }] };
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    return candidate.content.parts[0].text;
+                }
+                throw new Error('Could not get a valid response from the API.');
+            }
+
+            async function generateStudyPlan() {
+                const outputDiv = studyPlanModal.querySelector('.gemini-output');
+                outputDiv.innerHTML = loadingHTML;
+                
+                const allTasks = [...assignments, ...quizzes].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                const taskListString = allTasks.map(t => `- ${t.subject}: "${t.title}" due on ${t.dueDate}`).join('\n');
+                
+                const prompt = `I'm a first-year engineering student at Manipal. Today is ${today.toDateString()}. Here are my deadlines:\n${taskListString}\n\nCreate a prioritized 7-10 day study plan. Be an expert academic advisor. Use markdown with ### for headers, ** for bold, and * for list items.`;
+
+                try {
+                    const generatedText = await callGemini(prompt);
+                    outputDiv.innerHTML = simpleMarkdownToHtml(generatedText);
+                } catch (error) {
+                    console.error("Error generating study plan:", error);
+                    outputDiv.innerHTML = errorHTML(error.message);
+                }
+            }
+            
+            // -- Email Drafter
+            const emailFacultyName = document.getElementById('email-faculty-name');
+            const emailPurposeInput = document.getElementById('email-purpose');
+            const generateEmailBtn = document.getElementById('generate-email-btn');
+            let currentFaculty = {};
+
+            function openEmailModal(e) {
+                currentFaculty = {
+                    name: e.target.dataset.facultyName,
+                    subject: e.target.dataset.facultySubject
+                };
+                emailFacultyName.textContent = currentFaculty.name;
+                emailPurposeInput.value = '';
+                emailDraftModal.querySelector('.gemini-output').innerHTML = '';
+                openModal(emailDraftModal);
+            }
+            
+            generateEmailBtn.addEventListener('click', async () => {
+                const purpose = emailPurposeInput.value.trim();
+                if (!purpose) {
+                    alert('Please enter the purpose of your email.');
+                    return;
+                }
+                const outputDiv = emailDraftModal.querySelector('.gemini-output');
+                outputDiv.innerHTML = loadingHTML;
+
+                const prompt = `I need to write a professional and respectful email to my professor, ${currentFaculty.name}, who teaches ${currentFaculty.subject}. The purpose of the email is: "${purpose}". My name is Mohammad Shoaib Khan. Please draft the email for me.`;
+                
+                try {
+                    const generatedText = await callGemini(prompt);
+                    outputDiv.innerHTML = `
+                        <textarea class="w-full h-64 p-2 rounded-md bg-[var(--bg-color)] border border-[var(--border-color)] text-sm">${generatedText}</textarea>
+                        <button class="copy-email-btn mt-2 bg-gray-200 dark:bg-gray-600 text-sm font-semibold py-2 px-4 rounded-lg hover:opacity-90">Copy Text</button>
+                    `;
+                    outputDiv.querySelector('.copy-email-btn').addEventListener('click', (e) => {
+                        const textarea = outputDiv.querySelector('textarea');
+                        textarea.select();
+                        document.execCommand('copy');
+                        e.target.textContent = 'Copied!';
+                        setTimeout(() => e.target.textContent = 'Copy Text', 2000);
+                    });
+                } catch (error) {
+                    console.error("Error drafting email:", error);
+                    outputDiv.innerHTML = errorHTML(error.message);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
