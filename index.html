@@ -105,22 +105,6 @@
 
         .calendar-table td.event { background-color: #e0e7ff; }
         .dark .calendar-table td.event { background-color: #3730a3; }
-
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
-        .modal-content {
-            background-color: var(--card-bg);
-            max-height: 90vh;
-        }
-        .gemini-output h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            color: var(--header-text);
-        }
-        .gemini-output ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-        .gemini-output li { margin-bottom: 0.25rem; }
-        .gemini-output strong { color: var(--accent-color); }
     </style>
 </head>
 <body class="antialiased">
@@ -200,19 +184,6 @@
                         <div class="space-y-4"></div>
                     </section>
                 </div>
-                 <!-- Gemini Study Planner Section -->
-                <section class="lg:col-span-2 mt-8">
-                     <div class="bg-[var(--card-bg)] rounded-lg p-6 shadow-md text-center border border-[var(--border-color)]">
-                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                            AI Study Planner
-                        </h2>
-                        <p class="mb-6">Feeling overwhelmed? Let Gemini create a personalized study plan based on your upcoming deadlines.</p>
-                        <button id="generate-plan-btn" class="bg-[var(--accent-color)] text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center mx-auto">
-                           ✨ Generate Study Plan
-                        </button>
-                    </div>
-                </section>
             </section>
 
             <!-- Timetable Page -->
@@ -425,34 +396,6 @@
         </footer>
     </div>
     
-    <!-- Modals -->
-    <div id="study-plan-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="modal-content w-full max-w-2xl rounded-lg shadow-2xl p-6 relative overflow-y-auto">
-            <button class="close-modal-btn absolute top-4 right-4 text-[var(--text-color)] hover:opacity-75 transition-opacity">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-            <h2 class="text-2xl font-bold text-[var(--header-text)] mb-4">Your AI-Generated Study Plan</h2>
-            <div class="gemini-output"></div>
-        </div>
-    </div>
-    
-    <div id="email-draft-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-         <div class="modal-content w-full max-w-2xl rounded-lg shadow-2xl p-6 relative">
-             <button class="close-modal-btn absolute top-4 right-4 text-[var(--text-color)] hover:opacity-75 transition-opacity">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-             </button>
-             <h2 class="text-2xl font-bold text-[var(--header-text)] mb-4">AI Email Assistant</h2>
-             <p class="mb-4">To: <span id="email-faculty-name" class="font-semibold"></span></p>
-             <div class="space-y-4">
-                <label for="email-purpose" class="block text-sm font-medium">What is the purpose of your email?</label>
-                <input type="text" id="email-purpose" class="w-full p-2 rounded-md bg-[var(--bg-color)] border border-[var(--border-color)]" placeholder="e.g., Requesting an extension for the assignment">
-                <button id="generate-email-btn" class="bg-[var(--accent-color)] text-white font-bold py-2 px-4 rounded-lg shadow-md hover:opacity-90 transition-opacity w-full">✨ Generate Draft</button>
-                <hr class="border-[var(--border-color)]">
-                <div class="gemini-output"></div>
-             </div>
-        </div>
-    </div>
-    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- DATA ---
@@ -634,11 +577,9 @@
                                     ${f.email}
                                 </a>
                             </div>
-                            <button class="draft-email-btn mt-4 w-full bg-[var(--accent-color)] text-white text-sm font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity" data-faculty-name="${f.name}" data-faculty-subject="${f.subject}">✨ Draft Email</button>
                         </div>
                     `;
                 });
-                document.querySelectorAll('.draft-email-btn').forEach(btn => btn.addEventListener('click', openEmailModal));
             };
 
             const renderRestaurantCards = () => {
@@ -663,117 +604,6 @@
             renderDeadlineCards();
             renderFacultyCards();
             renderRestaurantCards();
-
-            // --- GEMINI API & MODAL LOGIC ---
-            const studyPlanModal = document.getElementById('study-plan-modal');
-            const emailDraftModal = document.getElementById('email-draft-modal');
-            const generatePlanBtn = document.getElementById('generate-plan-btn');
-            
-            const openModal = (modal) => modal.classList.remove('hidden');
-            const closeModal = (modal) => modal.classList.add('hidden');
-
-            document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => closeModal(e.target.closest('.modal-backdrop'))));
-            document.querySelectorAll('.modal-backdrop').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); }));
-            
-            const loadingHTML = `<div class="flex justify-center items-center py-12"><div class="animate-spin rounded-full h-12 w-12 border-b-4" style="border-color: var(--accent-color);"></div></div>`;
-            const errorHTML = (msg) => `<p class="text-red-500">Sorry, an error occurred: ${msg}. Please try again later.</p>`;
-
-            // -- Study Planner
-            generatePlanBtn.addEventListener('click', () => {
-                openModal(studyPlanModal);
-                generateStudyPlan();
-            });
-
-            function simpleMarkdownToHtml(markdown) {
-                return markdown
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/### (.*?)\n/g, '<h3>$1</h3>')
-                    .replace(/\* (.*?)\n/g, '<li>$1</li>')
-                    .replace(/(\<li\>.*?\<\/li\>)/gs, '<ul>$1</ul>');
-            }
-            
-            async function callGemini(userQuery) {
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                const payload = { contents: [{ parts: [{ text: userQuery }] }] };
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    return candidate.content.parts[0].text;
-                }
-                throw new Error('Could not get a valid response from the API.');
-            }
-
-            async function generateStudyPlan() {
-                const outputDiv = studyPlanModal.querySelector('.gemini-output');
-                outputDiv.innerHTML = loadingHTML;
-                
-                const allTasks = [...assignments, ...quizzes].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-                const taskListString = allTasks.map(t => `- ${t.subject}: "${t.title}" due on ${t.dueDate}`).join('\n');
-                
-                const prompt = `I'm a first-year engineering student at Manipal. Today is ${today.toDateString()}. Here are my deadlines:\n${taskListString}\n\nCreate a prioritized 7-10 day study plan. Be an expert academic advisor. Use markdown with ### for headers, ** for bold, and * for list items.`;
-
-                try {
-                    const generatedText = await callGemini(prompt);
-                    outputDiv.innerHTML = simpleMarkdownToHtml(generatedText);
-                } catch (error) {
-                    console.error("Error generating study plan:", error);
-                    outputDiv.innerHTML = errorHTML(error.message);
-                }
-            }
-            
-            // -- Email Drafter
-            const emailFacultyName = document.getElementById('email-faculty-name');
-            const emailPurposeInput = document.getElementById('email-purpose');
-            const generateEmailBtn = document.getElementById('generate-email-btn');
-            let currentFaculty = {};
-
-            function openEmailModal(e) {
-                currentFaculty = {
-                    name: e.target.dataset.facultyName,
-                    subject: e.target.dataset.facultySubject
-                };
-                emailFacultyName.textContent = currentFaculty.name;
-                emailPurposeInput.value = '';
-                emailDraftModal.querySelector('.gemini-output').innerHTML = '';
-                openModal(emailDraftModal);
-            }
-            
-            generateEmailBtn.addEventListener('click', async () => {
-                const purpose = emailPurposeInput.value.trim();
-                if (!purpose) {
-                    alert('Please enter the purpose of your email.');
-                    return;
-                }
-                const outputDiv = emailDraftModal.querySelector('.gemini-output');
-                outputDiv.innerHTML = loadingHTML;
-
-                const prompt = `I need to write a professional and respectful email to my professor, ${currentFaculty.name}, who teaches ${currentFaculty.subject}. The purpose of the email is: "${purpose}". My name is Mohammad Shoaib Khan. Please draft the email for me.`;
-                
-                try {
-                    const generatedText = await callGemini(prompt);
-                    outputDiv.innerHTML = `
-                        <textarea class="w-full h-64 p-2 rounded-md bg-[var(--bg-color)] border border-[var(--border-color)] text-sm">${generatedText}</textarea>
-                        <button class="copy-email-btn mt-2 bg-gray-200 dark:bg-gray-600 text-sm font-semibold py-2 px-4 rounded-lg hover:opacity-90">Copy Text</button>
-                    `;
-                    outputDiv.querySelector('.copy-email-btn').addEventListener('click', (e) => {
-                        const textarea = outputDiv.querySelector('textarea');
-                        textarea.select();
-                        document.execCommand('copy');
-                        e.target.textContent = 'Copied!';
-                        setTimeout(() => e.target.textContent = 'Copy Text', 2000);
-                    });
-                } catch (error) {
-                    console.error("Error drafting email:", error);
-                    outputDiv.innerHTML = errorHTML(error.message);
-                }
-            });
         });
     </script>
 </body>
