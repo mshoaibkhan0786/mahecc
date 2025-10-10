@@ -132,7 +132,7 @@
                              <svg class="h-8 w-8" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                                 <rect width="100" height="100" rx="20" fill="var(--accent-color)"/>
                                 <path fill="white" d="M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z"/>
-                            </svg>
+                              </svg>
                         </div>
                         <div class="ml-4">
                             <!-- Desktop Nav -->
@@ -317,25 +317,25 @@
                     </table>
                 </div>
                  <div class="mt-6 overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
-                     <table class="timetable-table">
-                         <thead>
-                             <tr>
-                                <th colspan="3">Mandatory Learning Courses</th>
-                             </tr>
-                             <tr>
-                                 <th>Course</th>
-                                 <th>Day</th>
-                                 <th>Time & Mode</th>
-                             </tr>
-                         </thead>
-                         <tbody>
-                            <tr>
-                                <td>CPI</td>
-                                <td>FRIDAY</td>
-                                <td>5:00 - 6:30 PM (ONLINE - MS TEAMS)</td>
-                            </tr>
-                         </tbody>
-                     </table>
+                       <table class="timetable-table">
+                           <thead>
+                               <tr>
+                                   <th colspan="3">Mandatory Learning Courses</th>
+                               </tr>
+                               <tr>
+                                   <th>Course</th>
+                                   <th>Day</th>
+                                   <th>Time & Mode</th>
+                               </tr>
+                           </thead>
+                           <tbody>
+                               <tr>
+                                   <td>CPI</td>
+                                   <td>FRIDAY</td>
+                                   <td>5:00 - 6:30 PM (ONLINE - MS TEAMS)</td>
+                               </tr>
+                           </tbody>
+                       </table>
                 </div>
             </section>
 
@@ -460,15 +460,7 @@
             }
 
 
-            // --- DATA ---
-            const assignments = [
-                { subject: 'FEE', title: 'Magnetism', dueDate: '2025-10-11' },
-            ];
-
-            const quizzes = [
-                { subject: 'Chemistry', title: 'Virtual Labs (7:30 PM)', dueDate: '2025-10-22' },
-            ];
-
+            // --- DATA (Static) ---
              const faculty = [
                 { name: 'Sandeep Sir', subject: 'EVS', contact: '+91 9164489836', cabin: 'AB2 Basement Floor', email: 'sandeep.gs@manipal.edu' },
                 { name: 'Shobha Ma\'am', subject: 'Maths', contact: '+91 9591474101', cabin: 'N/A', email: 'N/A' },
@@ -562,15 +554,24 @@
 
 
             // --- DYNAMIC CONTENT RENDERING ---
-            const renderDeadlineCards = () => {
+            const renderDeadlineCards = async () => {
                 const assignmentsContainer = document.querySelector('#assignments .space-y-4');
                 const quizzesContainer = document.querySelector('#quizzes .space-y-4');
-                assignmentsContainer.innerHTML = '';
-                quizzesContainer.innerHTML = '';
+                
+                if (!supabaseClient) {
+                    const errorHtml = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Supabase client not initialized. Cannot load deadlines.</p></div>`;
+                    assignmentsContainer.innerHTML = errorHtml;
+                    quizzesContainer.innerHTML = errorHtml;
+                    return;
+                }
+
+                // Initial loading state
+                const loadingHtml = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)]"><p class="text-sm text-gray-500 dark:text-gray-400">Loading...</p></div>`;
+                assignmentsContainer.innerHTML = loadingHtml;
+                quizzesContainer.innerHTML = loadingHtml;
 
                 const getDaysRemaining = (dueDate) => {
                     const due = new Date(dueDate);
-                    // Set time to the end of the day for accurate day counting
                     due.setHours(23, 59, 59, 999);
                     const diffTime = due.getTime() - today.getTime();
                     return Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -608,19 +609,48 @@
                         </div>`;
                 };
 
-                assignments
-                    .filter(ass => getDaysRemaining(ass.dueDate) >= -1)
-                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-                    .forEach(ass => {
-                        assignmentsContainer.innerHTML += createCard(ass);
-                    });
-                
-                quizzes
-                    .filter(quiz => getDaysRemaining(quiz.dueDate) >= -1)
-                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-                    .forEach(quiz => {
-                        quizzesContainer.innerHTML += createCard(quiz);
-                    });
+                try {
+                    // Fetch both assignments and quizzes
+                    const { data: assignments, error: assignmentsError } = await supabaseClient.from('assignments').select('*');
+                    if (assignmentsError) throw assignmentsError;
+
+                    const { data: quizzes, error: quizzesError } = await supabaseClient.from('quizzes').select('*');
+                    if (quizzesError) throw quizzesError;
+
+                    // Clear containers before rendering
+                    assignmentsContainer.innerHTML = '';
+                    quizzesContainer.innerHTML = '';
+
+                    // Render assignments
+                    if(assignments && assignments.length > 0) {
+                        assignments
+                            .filter(ass => getDaysRemaining(ass.dueDate) >= -1)
+                            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                            .forEach(ass => {
+                                assignmentsContainer.innerHTML += createCard(ass);
+                            });
+                    } else {
+                        assignmentsContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Assignments</h2></div>`;
+                    }
+                    
+                    // Render quizzes
+                    if(quizzes && quizzes.length > 0) {
+                        quizzes
+                            .filter(quiz => getDaysRemaining(quiz.dueDate) >= -1)
+                            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                            .forEach(quiz => {
+                                quizzesContainer.innerHTML += createCard(quiz);
+                            });
+                    } else {
+                        quizzesContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Quizzes</h2></div>`;
+                    }
+
+                } catch(error) {
+                    console.error("Error fetching deadline data:", error);
+                    const errorHtml = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Could not load data. Check RLS policies.</p></div>`;
+                    assignmentsContainer.innerHTML = errorHtml;
+                    quizzesContainer.innerHTML = errorHtml;
+                }
             };
 
             const renderFacultyCards = () => {
@@ -739,9 +769,16 @@
                          const { data } = await supabaseClient.from('announcements').select('*');
                          handleUpdates(data);
                     })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'quizzes' }, (payload) => {
+                        renderDeadlineCards();
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'assignments' }, (payload) => {
+                        renderDeadlineCards();
+                    })
                     .subscribe();
             };
 
+            // Initial Renders
             renderDeadlineCards();
             renderFacultyCards();
             renderRestaurantCards();
