@@ -578,30 +578,36 @@
                 };
 
                 const createCard = (item) => {
-                    const daysLeft = getDaysRemaining(item.dueDate);
-                    let daysText, daysColorClass;
-                    
-                    if (daysLeft < 0) { 
-                        daysText = 'Overdue'; 
-                        daysColorClass = 'bg-red-500 text-white'; 
-                    } else if (daysLeft === 0) { 
-                        daysText = 'Due Today'; 
-                        daysColorClass = 'bg-red-500 text-white'; 
-                    } else if (daysLeft === 1) { 
-                        daysText = 'Due Tomorrow'; 
-                        daysColorClass = 'bg-orange-500 text-white'; 
-                    } else { 
-                        daysText = `${daysLeft} days left`; 
-                        daysColorClass = 'bg-green-600 text-white'; 
+                    let daysText, daysColorClass, formattedDate;
+
+                    if (item.duedate) {
+                        const daysLeft = getDaysRemaining(item.duedate);
+                        if (daysLeft < 0) { 
+                            daysText = 'Overdue'; 
+                            daysColorClass = 'bg-red-500 text-white'; 
+                        } else if (daysLeft === 0) { 
+                            daysText = 'Due Today'; 
+                            daysColorClass = 'bg-red-500 text-white'; 
+                        } else if (daysLeft === 1) { 
+                            daysText = 'Due Tomorrow'; 
+                            daysColorClass = 'bg-orange-500 text-white'; 
+                        } else { 
+                            daysText = `${daysLeft} days left`; 
+                            daysColorClass = 'bg-green-600 text-white'; 
+                        }
+                        formattedDate = new Date(item.duedate).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                    } else {
+                        daysText = 'No Date';
+                        daysColorClass = 'bg-gray-400 text-white';
+                        formattedDate = 'N/A';
                     }
                     
-                    const formattedDate = new Date(item.dueDate).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
                     return `
                         <div class="bg-[var(--card-bg)] rounded-lg p-4 shadow-md border border-[var(--border-color)]">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="font-bold text-lg text-[var(--header-text)]">${item.subject}</p>
-                                    <p class="text-md">${item.title}</p>
+                                    <p class="font-bold text-lg text-[var(--header-text)]">${item.subject || 'N/A'}</p>
+                                    <p class="text-md">${item.title || 'No Title'}</p>
                                 </div>
                                 <span class="text-xs font-semibold px-3 py-1 rounded-full ${daysColorClass}">${daysText}</span>
                             </div>
@@ -621,26 +627,32 @@
                     assignmentsContainer.innerHTML = '';
                     quizzesContainer.innerHTML = '';
 
-                    // Render assignments
-                    if(assignments && assignments.length > 0) {
-                        assignments
-                            .filter(ass => getDaysRemaining(ass.dueDate) >= -1)
-                            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-                            .forEach(ass => {
-                                assignmentsContainer.innerHTML += createCard(ass);
-                            });
+                    // Sort assignments: by due date, with nulls last
+                    const sortedAssignments = (assignments || []).sort((a, b) => {
+                        if (!a.duedate) return 1;
+                        if (!b.duedate) return -1;
+                        return new Date(a.duedate) - new Date(b.duedate);
+                    });
+
+                    if (sortedAssignments.length > 0) {
+                        sortedAssignments.forEach(ass => {
+                            assignmentsContainer.innerHTML += createCard(ass);
+                        });
                     } else {
                         assignmentsContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Assignments</h2></div>`;
                     }
                     
-                    // Render quizzes
-                    if(quizzes && quizzes.length > 0) {
-                        quizzes
-                            .filter(quiz => getDaysRemaining(quiz.dueDate) >= -1)
-                            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-                            .forEach(quiz => {
-                                quizzesContainer.innerHTML += createCard(quiz);
-                            });
+                    // Sort quizzes: by due date, with nulls last
+                    const sortedQuizzes = (quizzes || []).sort((a, b) => {
+                        if (!a.duedate) return 1;
+                        if (!b.duedate) return -1;
+                        return new Date(a.duedate) - new Date(b.duedate);
+                    });
+
+                    if (sortedQuizzes.length > 0) {
+                        sortedQuizzes.forEach(quiz => {
+                            quizzesContainer.innerHTML += createCard(quiz);
+                        });
                     } else {
                         quizzesContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Quizzes</h2></div>`;
                     }
@@ -787,4 +799,6 @@
     </script>
 </body>
 </html>
+
+
 
