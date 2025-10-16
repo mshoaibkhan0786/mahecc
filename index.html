@@ -444,12 +444,12 @@
                     <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">Ask me anything about your subjects! I can help explain concepts, give you practice problems, or summarize topics.</p>
             
                     <!-- Chat messages display -->
-                    <div id="chat-messages" class="h-96 overflow-y-auto p-4 bg-[var(--bg-color)] rounded-lg mb-4 space-y-4">
+                        <div id="chat-messages" class="h-96 overflow-y-auto p-4 bg-[var(--bg-color)] rounded-lg mb-4 space-y-4">
                         <!-- Example AI message -->
                         <div class="flex items-start gap-3">
                             <span class="flex-shrink-0 h-8 w-8 rounded-full bg-[var(--accent-color)]/20 flex items-center justify-center text-[var(--accent-color)] font-bold">AI</span>
                             <div class="bg-[var(--card-bg)] p-3 rounded-lg border border-[var(--border-color)]">
-                                <p class="text-sm">Hi there! I'm Mitra, your AI study helper. How can I help you study today? Feel free to ask a question about any of your subjects.</p>
+                                <p class="text-sm">Hi there! I'm Circute, your AI study helper. How can I help you study today? Feel free to ask a question about any of your subjects.</p>
                             </div>
                         </div>
                     </div>
@@ -469,7 +469,7 @@
                         </button>
                     </div>
                     <div id="chat-loader" class="hidden text-center py-2">
-                        <p class="text-sm text-gray-500 animate-pulse">Mitra is thinking...</p>
+                        <p class="text-sm text-gray-500 animate-pulse">Circute is thinking...</p>
                     </div>
                 </div>
             </section>
@@ -503,18 +503,26 @@
         </footer>
 
         <!-- Email Composer Modal -->
-        <div id="email-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-            <div id="email-modal-content" class="bg-[var(--card-bg)] p-6 rounded-lg shadow-xl w-11/12 md:max-w-2xl mx-auto border border-[var(--border-color)]">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-[var(--header-text)]">Compose Email with AI</h2>
-                    <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+        <div id="email-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+            <div id="email-modal-content" class="bg-[var(--card-bg)] rounded-lg shadow-xl w-11/12 md:max-w-2xl mx-auto border border-[var(--border-color)] flex flex-col max-h-[90vh]">
+                <!-- Modal Header -->
+                <div class="flex-shrink-0 p-5 border-b border-[var(--border-color)]">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-[var(--header-text)]">Compose Email with Circute</h2>
+                        <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="space-y-4">
+
+                <!-- Scrollable Modal Body -->
+                <div class="overflow-y-auto p-6 space-y-4">
                     <div>
                         <label class="block text-sm font-medium">To:</label>
-                        <input type="text" id="modal-email-to" class="mt-1 block w-full bg-[var(--bg-color)] border border-[var(--border-color)] rounded-lg p-3" readonly>
+                        <input type="hidden" id="modal-email-to-value">
+                        <div class="mt-1 block w-full bg-[var(--bg-color)] border border-[var(--border-color)] rounded-lg p-3 break-all">
+                            <span id="modal-email-to-display" class="text-sm"></span>
+                        </div>
                     </div>
                     <div>
                         <label for="modal-email-subject" class="block text-sm font-medium">Subject:</label>
@@ -548,6 +556,10 @@
                         </div>
                          <p id="copy-confirm" class="text-xs text-green-600 mt-1 hidden">Copied!</p>
                     </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="flex-shrink-0 p-4 bg-[var(--bg-color)]/80 backdrop-blur-sm border-t border-[var(--border-color)] rounded-b-lg">
                      <button id="send-email-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center text-base">
                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.428A1 1 0 009.894 15V4.106A1 1 0 0010.894 2.553z" />
@@ -1004,7 +1016,7 @@
                 chatLoader.classList.remove('hidden');
                 sendChatBtn.disabled = true;
 
-                const systemPrompt = "You are a friendly and encouraging AI tutor for first-year engineering students at MIT Manipal. Your name is 'Mitra'. Your goal is to help students understand complex topics by breaking them down into simple, easy-to-understand explanations. Avoid overly technical jargon. Use analogies and real-world examples where possible. Keep your responses concise and focused on the student's question. When asked for practice problems, provide one and then offer to provide the solution.";
+                const systemPrompt = "You are a friendly and encouraging AI tutor for first-year engineering students at MIT Manipal. Your name is 'Circute'. Your goal is to help students understand complex topics by breaking them down into simple, easy-to-understand explanations. Avoid overly technical jargon. Use analogies and real-world examples where possible. Keep your responses concise and focused on the student's question. When asked for practice problems, provide one and then offer to provide the solution.";
                 const aiResponse = await callGeminiAPI(userQuery, systemPrompt);
 
                 addMessageToChat(aiResponse, 'ai');
@@ -1029,7 +1041,8 @@
              // --- AI Email Modal Logic ---
             const emailModal = document.getElementById('email-modal');
             const closeModalBtn = document.getElementById('close-modal-btn');
-            const modalEmailTo = document.getElementById('modal-email-to');
+            const modalEmailToDisplay = document.getElementById('modal-email-to-display');
+            const modalEmailToValue = document.getElementById('modal-email-to-value');
             const modalEmailFrom = document.getElementById('modal-email-from');
             const modalEmailRegNo = document.getElementById('modal-email-regno');
             const modalEmailSubject = document.getElementById('modal-email-subject');
@@ -1042,7 +1055,8 @@
             const sendEmailBtn = document.getElementById('send-email-btn');
             
             const openEmailModal = (facultyName, facultyEmail) => {
-                modalEmailTo.value = `${facultyName} <${facultyEmail}>`;
+                modalEmailToDisplay.textContent = `${facultyName} <${facultyEmail}>`;
+                modalEmailToValue.value = facultyEmail; // Storing for mailto
                 modalEmailFrom.value = '';
                 modalEmailRegNo.value = '';
                 modalEmailSubject.value = '';
@@ -1079,7 +1093,7 @@
             });
 
             modalGenerateEmailBtn.addEventListener('click', async () => {
-                const recipientName = modalEmailTo.value.split('<')[0].trim();
+                const recipientName = modalEmailToDisplay.textContent.split('<')[0].trim();
                 const fromName = modalEmailFrom.value.trim();
                 const regNo = modalEmailRegNo.value.trim();
                 const subject = modalEmailSubject.value.trim();
@@ -1126,21 +1140,13 @@
             });
 
             sendEmailBtn.addEventListener('click', () => {
-                const toValue = modalEmailTo.value;
+                const email = modalEmailToValue.value;
                 const subject = modalEmailSubject.value;
                 const body = modalEmailBody.value;
 
-                if (!toValue || !body) {
+                if (!email || !body) {
                     return; // Do nothing if there's no recipient or body
                 }
-
-                // Extract email from "Name <email@example.com>" format
-                const emailMatch = toValue.match(/<([^>]+)>/);
-                if (!emailMatch) {
-                    console.error("Could not parse email address from:", toValue);
-                    return;
-                }
-                const email = emailMatch[1];
 
                 const encodedSubject = encodeURIComponent(subject);
                 const encodedBody = encodeURIComponent(body);
@@ -1161,6 +1167,9 @@
     </script>
 </body>
 </html>
+
+
+
 
 
 
