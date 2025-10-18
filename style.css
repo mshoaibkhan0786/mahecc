@@ -1,0 +1,123 @@
+:root {
+    --bg-color-light: #f3f4f6;
+    --text-color-light: #1f2937;
+    --card-bg-light: #ffffff;
+    --header-text-light: #0f172a;
+    --accent-color-light: #6d28d9; /* Violet-700 */
+    --border-color-light: #e5e7eb;
+    --nav-bg-light: #ffffff;
+
+    --bg-color-dark: #111827;
+    --text-color-dark: #d1d5db;
+    --card-bg-dark: #1f2937;
+    --header-text-dark: #f9fafb;
+    --accent-color-dark: #8b5cf6; /* Violet-500 */
+    --border-color-dark: #374151;
+    --nav-bg-dark: #1f2937;
+}
+
+.light {
+    --bg-color: var(--bg-color-light);
+    --text-color: var(--text-color-light);
+    --card-bg: var(--card-bg-light);
+    --header-text: var(--header-text-light);
+    --accent-color: var(--accent-color-light);
+    --border-color: var(--border-color-light);
+    --nav-bg: var(--nav-bg-light);
+}
+
+.dark {
+    --bg-color: var(--bg-color-dark);
+    --text-color: var(--text-color-dark);
+    --card-bg: var(--card-bg-dark);
+    --header-text: var(--header-text-dark);
+    --accent-color: var(--accent-color-dark);
+    --border-color: var(--border-color-dark);
+    --nav-bg: var(--nav-bg-dark);
+}
+
+html {
+    scrollbar-gutter: stable;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.main-content-area {
+    padding-top: 80px; /* Adjust based on nav height */
+}
+
+.nav-link {
+    font-weight: 600; /* Semibold */
+    color: #6b7280; /* gray-500 */
+}
+.dark .nav-link {
+    color: #9ca3af; /* gray-400 */
+}
+.nav-link.active {
+    color: var(--accent-color);
+}
+.timetable-table, .calendar-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 100%;
+    background-color: var(--card-bg);
+}
+.timetable-table th, .timetable-table td, .calendar-table th, .calendar-table td {
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.8rem;
+}
+@media (min-width: 640px) {
+     .timetable-table th, .timetable-table td, .calendar-table th, .calendar-table td {
+         font-size: 0.9rem;
+    }
+}
+.timetable-table th, .calendar-table th {
+    background-color: var(--bg-color);
+    color: var(--header-text);
+    font-weight: 600;
+}
+.timetable-table .time-col {
+    font-weight: 500;
+    white-space: nowrap;
+}
+.timetable-table .lunch { background-color: #d1fae5; }
+.dark .timetable-table .lunch { background-color: #064e3b; }
+.timetable-table .break { background-color: #fee2e2; }
+.dark .timetable-table .break { background-color: #7f1d1d; }
+
+.calendar-table td.holiday { background-color: #fef9c3; }
+.dark .calendar-table td.holiday { background-color: #713f12; }
+.calendar-table td.exam { background-color: #ffe4e6; }
+.dark .calendar-table td.exam { background-color: #8c2a32; }
+
+.calendar-table td.event { background-color: #e0e7ff; }
+.dark .calendar-table td.event { background-color: #3730a3; }
+
+.prompt-suggestion-btn {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+.prompt-suggestion-btn:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+#email-modal-content {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+#email-modal.active #email-modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
