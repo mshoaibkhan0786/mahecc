@@ -75,15 +75,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuOpenIcon = document.getElementById('menu-open-icon');
     const menuCloseIcon = document.getElementById('menu-close-icon');
 
+    const normalizePath = (p) => {
+        if (!p) return '/';
+        // Remove search and hash
+        p = p.split('?')[0].split('#')[0];
+        // Treat index.html and trailing slash as equivalent
+        p = p.replace(/index\.html$/i, '');
+        // Remove trailing slash except for root
+        if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+        return p || '/';
+    };
+
     const setActiveLink = () => {
-        const currentPath = window.location.pathname;
+        const currentPathRaw = window.location.pathname;
+        const currentPath = normalizePath(currentPathRaw);
         navLinks.forEach(link => {
-            const linkPath = link.getAttribute('href'); 
+            const linkHref = link.getAttribute('href');
+            const linkPath = normalizePath(linkHref);
             link.classList.remove('active');
 
-            if ((currentPath === '/' || currentPath === '/index.html') && linkPath === '/') {
-                 link.classList.add('active');
-            } else if (linkPath !== '/' && currentPath.startsWith(linkPath)) {
+            // Exact match or current path starts with link path (for sections)
+            if (linkPath === '/' && currentPath === '/') {
+                link.classList.add('active');
+            } else if (linkPath !== '/' && (currentPath === linkPath || currentPath.startsWith(linkPath + '/'))) {
+                link.classList.add('active');
+            } else if (linkPath !== '/' && currentPath === linkPath) {
                 link.classList.add('active');
             }
         });
@@ -96,6 +112,17 @@ document.addEventListener('DOMContentLoaded', () => {
             menuCloseIcon.classList.toggle('hidden');
         });
     }
+
+    // Close mobile menu when a nav link is clicked (good UX on mobile)
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+                if (menuCloseIcon) menuCloseIcon.classList.add('hidden');
+                if (menuOpenIcon) menuOpenIcon.classList.remove('hidden');
+            }
+        });
+    });
 
     setActiveLink();
 
