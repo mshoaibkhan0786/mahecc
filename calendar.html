@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - MIT Manipal CSE Section CC</title>
+    <title>Calendar - MIT Manipal CSE Section CC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +12,7 @@
     
     <!-- Supabase Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="antialiased">
@@ -75,7 +76,7 @@
                         <span class="font-medium text-base text-[var(--text-color)]">Toggle Theme</span>
                         <button class="theme-switcher-btn bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)]">
                             <svg class="theme-icon-sun h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                            <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                             <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         </button>
                     </div>
                 </div>
@@ -83,61 +84,69 @@
         </header>
 
         <main class="main-content-area max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Home Page -->
-            <section id="home">
+            <!-- Academic Calendar Page -->
+            <section id="academic-calendar">
                 <header class="mb-8">
-                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Dashboard</h1>
-                    <p class="text-md mt-1">Deadlines and tasks for Section CC</p>
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Academic Calendar 2025-26</h1>
+                    <p class="text-md mt-1">Official calendar for Odd and Even semesters.</p>
                 </header>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    <!-- Main Content -->
-                    <div class="lg:col-span-2">
-                        <div class="space-y-8">
-                            <section id="quizzes">
-                                <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Upcoming Quizzes
-                                </h2>
-                                <div class="space-y-4"></div>
-                            </section>
-                            <section id="assignments">
-                                <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
-                                    Upcoming Assignments
-                                </h2>
-                                <div class="space-y-4"></div>
-                            </section>
+                <div class="space-y-12">
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)]">Odd Semester (July - December 2025)</h2>
+                        <div class="overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                            <table class="calendar-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>July</th>
+                                        <th>August</th>
+                                        <th>September</th>
+                                        <th>October</th>
+                                        <th>November</th>
+                                        <th>December</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr> <td>1-8</td> <td></td> <td></td> <td></td> <td>1: Maha Navami</td> <td>1: Karnataka Rajyotsava</td> <td>1: Winter Labs Start</td> </tr>
+                                    <tr> <td>9-16</td> <td>11-12: Doc Verification</td> <td class="holiday">15: Independence Day<br>16: Holiday (Third Sat)</td> <td>12-13: Mid-term Exam</td> <td class="event">10: Tech Tatva</td> <td class="holiday">15: Holiday (Third Sat)</td> <td>13: Exam Results</td> </tr>
+                                    <tr> <td>17-24</td> <td>19: Holiday (Third Sat)<br>22: First Class Committee</td> <td></td> <td class="holiday">20: Holiday (Third Sat)</td> <td class="holiday">18: Holiday (Third Sat)<br>20: Deepavali</td> <td>17: End Sem Exams Start</td> <td>19: Makeup Exams Start<br><span class="holiday">20: Holiday (Third Sat)</span></td> </tr>
+                                    <tr> <td>25-31</td> <td>25: Friday Timetable</td> <td></td> <td></td> <td></td> <td class="exam">29: End Sem Exam End</td> <td>25: Christmas</td> </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-
-                    <!-- Sidebar -->
-                    <div class="lg:col-span-1">
-                        <section id="notifications">
-                            <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                </svg>
-                                Announcements
-                            </h2>
-                            <div class="space-y-3">
-                                <!-- Notification cards will be injected here by JavaScript -->
-                            </div>
-                        </section>
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)]">Even Semester (January - May 2026)</h2>
+                        <div class="overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                           <table class="calendar-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>January</th>
+                                        <th>February</th>
+                                        <th>March</th>
+                                        <th>April</th>
+                                        <th>May</th>
+                                        <th>June</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr> <td>1-8</td> <td></td> <td>6: First Class Committee</td> <td>4: Holi</td> <td class="holiday">1: May Day</td> <td>2: End Sem Exam Start</td> <td>1: End Sem Results</td> </tr>
+                                    <tr> <td>9-16</td> <td></td> <td></td> <td>6-7: Mid-term Exam</td> <td>9-11: UTSAV</td> <td class="holiday">16: Holiday (Third Sat)</td> <td>8: Makeup Exams Start</td> </tr>
+                                    <tr> <td>17-24</td> <td class="holiday">17: Holiday (Third Sat)</td> <td class="holiday">21: Holiday (Third Sat)</td> <td>10-11: Mid-term Exam<br><span class="holiday">21: Holiday (Third Sat)</span></td> <td class="holiday">18: Holiday (Third Sat)</td> <td class="exam">19: Last working Day</td> <td class="holiday">20: Holiday (Third Sat)</td> </tr>
+                                    <tr> <td>25-31</td> <td class="holiday">26: Republic Day</td> <td></td> <td class="event">26-27: Revels</td> <td>30: Finalizing IA marks</td> <td></td> <td></td> </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>
-
         </main>
 
         <footer class="text-center py-6 border-t border-[var(--border-color)] mt-12">
             <p class="text-sm text-gray-400 dark:text-gray-500 opacity-75">Built by Mohammad Shoaib Khan</p>
         </footer>
-
-        <!-- Email Composer Modal -->
-        <!-- The Email Modal is only needed on the Faculty page, but can be kept here for simplicity -->
     </div>
-    
     <script src="script.js"></script>
 </body>
 </html>
