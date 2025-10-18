@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable - MIT Manipal CSE Section CC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236d28d9'/%3E%3Cpath fill='white' d='M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z'/%3E%3C/svg%3E">
+    
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="antialiased">
+    <div id="app">
+        <!-- Header & Navigation -->
+        <header class="bg-[var(--nav-bg)] shadow-md fixed w-full top-0 z-50 transition-colors duration-300">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 transition-transform duration-300 ease-in-out hover:-translate-y-0.5 cursor-pointer">
+                             <svg class="h-8 w-8" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                 <rect width="100" height="100" rx="20" fill="var(--accent-color)"/>
+                                 <path fill="white" d="M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z"/>
+                               </svg>
+                        </div>
+                        <div class="ml-4">
+                            <!-- Desktop Nav -->
+                            <div class="hidden md:flex items-baseline space-x-4">
+                                <a href="../index.html" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Home</a>
+                                <a href="./index.html" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Timetable</a>
+                                <a href="../Faculty/index.html" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Faculty</a>
+                                <a href="../Calendar/index.html" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Calendar</a>
+                                <a href="../Study Material/index.html" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Study Material</a>
+                                <a href="../Restaurants/restaurants.html" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Restaurants</a>
+                                <a href="../Gallery/index.html" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Gallery</a>
+                            </div>
+                            <!-- Mobile Visible Nav -->
+                            <div class="flex md:hidden items-baseline space-x-1">
+                                <a href="../index.html" class="nav-link px-2 py-2 rounded-md text-sm transition-colors">Home</a>
+                                <a href="./index.html" class="nav-link px-2 py-2 rounded-md text-sm transition-colors">Timetable</a>
+                                <a href="../Faculty/index.html" class="nav-link px-2 py-2 rounded-md text-sm transition-colors">Faculty</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                         <!-- Desktop Theme Switcher -->
+                         <button class="theme-switcher-btn bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)] hidden md:block">
+                             <svg class="theme-icon-sun h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                             <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        </button>
+                         <div class="ml-2 flex md:hidden">
+                            <button id="mobile-menu-button" type="button" class="bg-[var(--card-bg)] inline-flex items-center justify-center p-2 rounded-md text-[var(--text-color)] hover:bg-[var(--bg-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--card-bg)] focus:ring-[var(--accent-color)]">
+                                <span class="sr-only">Open main menu</span>
+                                <svg id="menu-open-icon" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                <svg id="menu-close-icon" class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="../Calendar/index.html" class="nav-link block px-3 py-2 rounded-md text-base">Calendar</a>
+                    <a href="../Study Material/index.html" class="nav-link block px-3 py-2 rounded-md text-base">Study Material</a>
+                    <a href="../Restaurants/restaurants.html" class="nav-link block px-3 py-2 rounded-md text-base">Restaurants</a>
+                    <a href="../Gallery/index.html" class="nav-link block px-3 py-2 rounded-md text-base">Gallery</a>
+                </div>
+                <div class="border-t border-[var(--border-color)] px-5 py-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium text-base text-[var(--text-color)]">Toggle Theme</span>
+                        <button class="theme-switcher-btn bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)]">
+                            <svg class="theme-icon-sun h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                             <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content-area max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Timetable Page -->
+            <section id="timetable">
+                 <header class="mb-8">
+                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Class Timetable</h1>
+                    <p class="text-md mt-1">July - Nov 2025 | Semester I, Section CC (Stream: CSE)</p>
+                </header>
+                 <div class="overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                    <table class="timetable-table">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>08:00 - 09:00</th>
+                                <th>09:00 - 10:00</th>
+                                <th>10:00 - 10:30</th>
+                                <th>10:30 - 11:30</th>
+                                <th>11:30 - 12:30</th>
+                                <th>12:30 - 01:00</th>
+                                <th>01:00 - 02:00</th>
+                                <th>02:00 - 03:00</th>
+                                <th>03:00 - 03:30</th>
+                                <th>03:30 - 04:30</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="time-col">MON</td>
+                                <td colspan="2">EVS (P)<br>(SGS)</td>
+                                <td class="break">Break</td>
+                                <td>MATHS<br>(SME)</td>
+                                <td></td>
+                                <td class="lunch" rowspan="6">Lunch Break</td>
+                                <td></td>
+                                <td colspan="3">CAEG LAB (2:00 - 5:00 PM)<br>[CC1: AB1 328; CC2: AB 331]</td>
+                            </tr>
+                            <tr>
+                                <td class="time-col">TUE</td>
+                                <td colspan="5"></td>
+                                <td>EMSB<br>(BS)</td>
+                                <td>FEE<br>(AN)</td>
+                                <td class="break">Break</td>
+                                <td>CHEM<br>(SA)</td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">WED</td>
+                                <td>MATHS<br>(SME)</td>
+                                <td>EMSB<br>(BS)</td>
+                                <td class="break">Break</td>
+                                <td>FEE<br>(AN)</td>
+                                <td>PPS<br>(TS)</td>
+                                <td colspan="4"></td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">THU</td>
+                                <td colspan="5"></td>
+                                <td>CHEM<br>(SA)</td>
+                                <td>PPS<br>(TS)</td>
+                                <td class="break">Break</td>
+                                <td>EVS (L)<br>(SGS)</td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">FRI</td>
+                                <td>FEE<br>(AN)</td>
+                                <td>CHEM<br>(SA)</td>
+                                <td class="break">Break</td>
+                                <td>PPS<br>(TS)</td>
+                                <td>MATHS<br>(SME)</td>
+                                <td colspan="4"></td>
+                            </tr>
+                             <tr>
+                                <td class="time-col">SAT</td>
+                                <td></td>
+                                <td colspan="3">PPS LAB (9:00 - 11:30 AM)<br>(AB1 129)</td>
+                                <td></td>
+                                <td></td>
+                                <td>MATHS<br>(SME)</td>
+                                <td class="break">Break</td>
+                                <td>EMSB<br>(BS)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <div class="mt-6 overflow-x-auto bg-[var(--card-bg)] rounded-lg shadow-md">
+                        <table class="timetable-table">
+                            <thead>
+                                <tr>
+                                    <th colspan="3">Mandatory Learning Courses</th>
+                                </tr>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Day</th>
+                                    <th>Time & Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>CPI</td>
+                                    <td>FRIDAY</td>
+                                    <td>5:00 - 6:30 PM (ONLINE - MS TEAMS)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                </div>
+            </section>
+        </main>
+
+        <footer class="text-center py-6 border-t border-[var(--border-color)] mt-12">
+            <p class="text-sm text-gray-400 dark:text-gray-500 opacity-75">Built by Mohammad Shoaib Khan</p>
+        </footer>
+    </div>
+    <script src="../script.js"></script>
+</body>
+</html>
