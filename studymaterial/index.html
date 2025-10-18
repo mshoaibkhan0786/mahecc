@@ -22,7 +22,7 @@
             <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 transition-transform duration-300 ease-in-out hover:-translate-y-0.5 cursor-pointer">
+                        <div class="flex-shrink-0 transition-transform duration-300 ease-in-out hover:-translate-y-0.5 cursor-pointer" onclick="window.location.href='/';">
                              <svg class="h-8 w-8" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                                  <rect width="100" height="100" rx="20" fill="var(--accent-color)"/>
                                  <path fill="white" d="M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z"/>
@@ -35,7 +35,7 @@
                                 <a href="/timetable/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Timetable</a>
                                 <a href="/faculty/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Faculty</a>
                                 <a href="/calendar/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Calendar</a>
-                                <a href="/studymaterial/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Study Material</a>
+                                <a href="/studymaterial/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors active">Study Material</a>
                                 <a href="/restaurants/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Restaurants</a>
                                 <a href="/gallery/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Gallery</a>
                             </div>
@@ -67,9 +67,10 @@
             <div id="mobile-menu" class="md:hidden hidden">
                 <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                     <a href="/calendar/" class="nav-link block px-3 py-2 rounded-md text-base">Calendar</a>
-                    <a href="/studymaterial/" class="nav-link block px-3 py-2 rounded-md text-base">Study Material</a>
+                    <a href="/studymaterial/" class="nav-link block px-3 py-2 rounded-md text-base active">Study Material</a>
                     <a href="/restaurants/" class="nav-link block px-3 py-2 rounded-md text-base">Restaurants</a>
                     <a href="/gallery/" class="nav-link block px-3 py-2 rounded-md text-base">Gallery</a>
+                    <a href="/circute/" class="nav-link block px-3 py-2 rounded-md text-base">Circute AI</a>
                 </div>
                 <div class="border-t border-[var(--border-color)] px-5 py-3">
                     <div class="flex items-center justify-between">
@@ -89,41 +90,8 @@
                  <header class="mb-8">
                     <h1 class="text-3xl font-bold text-[var(--header-text)]">Study Material</h1>
                 </header>
-                <!-- Gemini AI Study Helper -->
-                <div id="study-helper" class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] p-4 sm:p-6">
-                    <div class="flex items-center gap-4 mb-4">
-                        <h2 class="text-2xl font-bold text-[var(--header-text)]">✨ AI Study Helper</h2>
-                    </div>
-                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">Ask me anything about your subjects! I can help explain concepts, give you practice problems, or summarize topics.</p>
-            
-                    <!-- Chat messages display -->
-                        <div id="chat-messages" class="h-96 overflow-y-auto p-4 bg-[var(--bg-color)] rounded-lg mb-4 space-y-4">
-                        <!-- Example AI message -->
-                        <div class="flex items-start gap-3">
-                            <span class="flex-shrink-0 h-8 w-8 rounded-full bg-[var(--accent-color)]/20 flex items-center justify-center text-[var(--accent-color)] font-bold">AI</span>
-                            <div class="bg-[var(--card-bg)] p-3 rounded-lg border border-[var(--border-color)]">
-                                <p class="text-sm">Hi there! I'm Circute, your AI study helper. How can I help you study today? Feel free to ask a question about any of your subjects.</p>
-                            </div>
-                        </div>
-                    </div>
-            
-                    <!-- Prompt suggestions -->
-                    <div class="mb-4 flex flex-wrap gap-2">
-                         <button class="prompt-suggestion-btn">Explain recursion in PPS</button>
-                         <button class="prompt-suggestion-btn">Summarize Newton's Laws</button>
-                         <button class="prompt-suggestion-btn">Practice problem for differentiation</button>
-                    </div>
-            
-                    <!-- Chat input -->
-                    <div class="flex gap-2">
-                        <input type="text" id="chat-input" placeholder="Type your question here..." class="flex-grow bg-[var(--bg-color)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] transition duration-200">
-                        <button id="send-chat-btn" class="bg-[var(--accent-color)] hover:opacity-90 text-white font-bold py-3 px-5 rounded-lg transition-transform transform hover:scale-105 duration-300 flex items-center justify-center">
-                            Send
-                        </button>
-                    </div>
-                    <div id="chat-loader" class="hidden text-center py-2">
-                        <p class="text-sm text-gray-500 animate-pulse">Circute is thinking...</p>
-                    </div>
+                <div class="flex items-center justify-center h-96 bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)]">
+                    <h2 class="text-5xl font-bold text-[var(--accent-color)] opacity-75 animate-pulse">Coming Soon</h2>
                 </div>
             </section>
         </main>
