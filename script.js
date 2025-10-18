@@ -76,20 +76,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuCloseIcon = document.getElementById('menu-close-icon');
 
     const setActiveLink = () => {
-        const currentPath = window.location.pathname.split("/").pop();
+        const currentPath = window.location.pathname;
         navLinks.forEach(link => {
-            const linkPath = link.getAttribute('href');
-            // Handle index.html as the root
-            if ((currentPath === '' || currentPath === 'index.html') && (linkPath === 'index.html' || linkPath === './')) {
+            const linkPath = link.getAttribute('href'); 
+            link.classList.remove('active');
+
+            if ((currentPath === '/' || currentPath === '/index.html') && linkPath === '/') {
+                 link.classList.add('active');
+            } else if (linkPath !== '/' && currentPath.startsWith(linkPath)) {
                 link.classList.add('active');
-            } else if (linkPath === currentPath) {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
             }
         });
     };
-
+    
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
@@ -106,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const assignmentsContainer = document.querySelector('#assignments .space-y-4');
         const quizzesContainer = document.querySelector('#quizzes .space-y-4');
         
-        // Only run if the containers are on the current page
         if (!assignmentsContainer || !quizzesContainer) return;
 
         if (!supabaseClient) {
@@ -116,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Initial loading state
         const loadingHtml = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)]"><p class="text-sm text-gray-500 dark:text-gray-400">Loading...</p></div>`;
         assignmentsContainer.innerHTML = loadingHtml;
         quizzesContainer.innerHTML = loadingHtml;
@@ -167,18 +164,15 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            // Fetch both assignments and quizzes
             const { data: assignments, error: assignmentsError } = await supabaseClient.from('assignments').select('*');
             if (assignmentsError) throw assignmentsError;
 
             const { data: quizzes, error: quizzesError } = await supabaseClient.from('quizzes').select('*');
             if (quizzesError) throw quizzesError;
 
-            // Clear containers before rendering
             assignmentsContainer.innerHTML = '';
             quizzesContainer.innerHTML = '';
 
-            // Sort assignments: by due date, with nulls last
             const sortedAssignments = (assignments || []).sort((a, b) => {
                 if (!a.duedate) return 1;
                 if (!b.duedate) return -1;
@@ -193,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 assignmentsContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Assignments</h2></div>`;
             }
             
-            // Sort quizzes: by due date, with nulls last
             const sortedQuizzes = (quizzes || []).sort((a, b) => {
                 if (!a.duedate) return 1;
                 if (!b.duedate) return -1;
@@ -218,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderFacultyCards = () => {
         const container = document.querySelector('#faculty-container');
-        if (!container) return; // Only run on faculty page
+        if (!container) return; 
 
         container.innerHTML = '';
         faculty.forEach(f => {
@@ -256,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderRestaurantCards = () => {
         const container = document.querySelector('#restaurants-container');
-        if (!container) return; // Only run on restaurants page
+        if (!container) return; 
 
         container.innerHTML = '';
         restaurants.forEach(r => {
@@ -292,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderAnnouncements = async () => {
         const container = document.querySelector('#notifications .space-y-3');
-        if (!container) return; // Only run on home page
+        if (!container) return; 
 
         if (!supabaseClient) {
              container.innerHTML = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Supabase client not initialized.</p></div>`;
@@ -331,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
         
-        // Fetch initial data
         const { data, error } = await supabaseClient.from('announcements').select('*');
         if (error) {
                console.error("Supabase error:", error);
@@ -340,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
                handleUpdates(data);
         }
 
-        // Listen for real-time changes
         if (supabaseClient) {
             supabaseClient.channel('custom-all-channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, async (_payload) => {
@@ -357,13 +348,124 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- GEMINI API FEATURES ---
+    const renderGalleryImages = async () => {
+        const placeholder = document.querySelector('#gallery-placeholder');
+        const container = document.querySelector('#gallery-container');
+        
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxCloseBtn = document.getElementById('lightbox-close');
+        const lightboxPrevBtn = document.getElementById('lightbox-prev');
+        const lightboxNextBtn = document.getElementById('lightbox-next');
+    
+        if (!container || !placeholder || !lightboxModal) return;
+    
+        if (!supabaseClient) {
+            placeholder.innerHTML = `<h2 class="text-2xl font-bold text-red-500">Error: Supabase Not Ready</h2>`;
+            return;
+        }
+    
+        const BUCKET_NAME = 'gallery-images'; 
+    
+        try {
+            const { data: files, error } = await supabaseClient
+                .storage
+                .from(BUCKET_NAME)
+                .list('', { sortBy: { column: 'created_at', order: 'desc' } });
+    
+            if (error) throw error;
+            
+            const imageFiles = files.filter(file => {
+                const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+                return allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+            });
+    
+            if (!imageFiles || imageFiles.length === 0) {
+                container.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                return; 
+            }
+    
+            placeholder.classList.add('hidden');
+            container.classList.remove('hidden');
+            container.innerHTML = ''; 
 
+            const imageUrls = [];
+            let currentIndex = 0;
+
+            imageFiles.forEach((file, index) => {
+                const { data: publicUrlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(file.name);
+                
+                if (publicUrlData.publicUrl) {
+                    imageUrls.push(publicUrlData.publicUrl);
+
+                    const imageElement = document.createElement('div');
+                    imageElement.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden border border-[var(--border-color)]';
+                    imageElement.innerHTML = `
+                        <img src="${publicUrlData.publicUrl}" alt="Gallery thumbnail" class="w-full h-48 object-contain transition-transform duration-300 cursor-pointer">
+                    `;
+                    imageElement.querySelector('img').addEventListener('click', () => {
+                        currentIndex = index;
+                        showImageAtIndex(currentIndex);
+                    });
+                    container.appendChild(imageElement);
+                }
+            });
+
+            function showImageAtIndex(index) {
+                lightboxImage.src = imageUrls[index];
+                lightboxModal.classList.remove('hidden');
+            }
+
+            function showNextImage() {
+                currentIndex = (currentIndex + 1) % imageUrls.length;
+                showImageAtIndex(currentIndex);
+            }
+
+            function showPrevImage() {
+                currentIndex = (currentIndex - 1 + imageUrls.length) % imageUrls.length;
+                showImageAtIndex(currentIndex);
+            }
+
+            lightboxNextBtn.addEventListener('click', showNextImage);
+            lightboxPrevBtn.addEventListener('click', showPrevImage);
+
+            const closeLightbox = () => {
+                lightboxModal.classList.add('hidden');
+                lightboxImage.src = "";
+            };
+            
+            lightboxCloseBtn.addEventListener('click', closeLightbox);
+            lightboxModal.addEventListener('click', (e) => {
+                if (e.target === lightboxModal) {
+                    closeLightbox();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!lightboxModal.classList.contains('hidden')) {
+                    if (e.key === 'ArrowRight') {
+                        showNextImage();
+                    } else if (e.key === 'ArrowLeft') {
+                        showPrevImage();
+                    } else if (e.key === 'Escape') {
+                        closeLightbox();
+                    }
+                }
+            });
+    
+        } catch (error) {
+            console.error("Error fetching gallery images:", error);
+            placeholder.classList.remove('hidden');
+            container.classList.add('hidden');
+            placeholder.innerHTML = `<h2 class="text-2xl font-bold text-red-500">Could not load images</h2>`;
+        }
+    };
+
+    // --- GEMINI API FEATURES ---
     const callGeminiAPI = async (userQuery, systemPrompt, retries = 3, delay = 1000) => {
-        // The URL now points to your Supabase Edge Function.
         const supabaseFunctionUrl = 'https://syvpeftawfakdiebueji.supabase.co/functions/v1/call-gemini';
         const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
-
         const payload = { userQuery, systemPrompt };
 
         try {
@@ -371,8 +473,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'apikey': supabaseAnonKey, // Correct Supabase anon key
-                    'Authorization': `Bearer ${supabaseAnonKey}` // Standard authorization header
+                    'apikey': supabaseAnonKey, 
+                    'Authorization': `Bearer ${supabaseAnonKey}`
                 },
                 body: JSON.stringify(payload)
             });
@@ -394,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  throw new Error(`Error from Supabase Function: ${result.error}`);
             }
             else {
-                // Check for a different error structure from Gemini through the function
                 if(result.error && result.error.message) {
                     throw new Error(`Error from Gemini API: ${result.error.message}`);
                 }
@@ -405,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `Sorry, an error occurred: ${error.message}`;
         }
     };
-
+    
     // --- AI Study Helper Logic ---
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
@@ -413,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatLoader = document.getElementById('chat-loader');
     const promptSuggestionBtns = document.querySelectorAll('.prompt-suggestion-btn');
 
-    if (chatInput) { // Only run if on study material page
+    if (chatInput) { 
         const addMessageToChat = (message, sender) => {
             const messageDiv = document.createElement('div');
             let content;
@@ -489,10 +590,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyConfirm = document.getElementById('copy-confirm');
     const sendEmailBtn = document.getElementById('send-email-btn');
     
-    if (emailModal) { // Only add listeners if modal exists on page
+    if (emailModal) { 
         const openEmailModal = (facultyName, facultyEmail) => {
             modalEmailToDisplay.textContent = `${facultyName} <${facultyEmail}>`;
-            modalEmailToValue.value = facultyEmail; // Storing for mailto
+            modalEmailToValue.value = facultyEmail;
             modalEmailFrom.value = localStorage.getItem('userName') || '';
             modalEmailRegNo.value = localStorage.getItem('userRegNo') || '';
             modalEmailSubject.value = '';
@@ -505,14 +606,13 @@ document.addEventListener('DOMContentLoaded', () => {
             emailModal.classList.add('active');
         };
 
-        const closeEmailModal = () => {
+        const closeLightbox = () => {
             emailModal.classList.remove('active');
             setTimeout(() => {
                 emailModal.classList.add('hidden');
-            }, 200); // match transition duration
+            }, 200);
         };
 
-        // Event delegation for compose buttons
         document.body.addEventListener('click', (e) => {
             const button = e.target.closest('.compose-email-btn');
             if (button) {
@@ -522,10 +622,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        closeModalBtn.addEventListener('click', closeEmailModal);
+        closeModalBtn.addEventListener('click', closeLightbox);
         emailModal.addEventListener('click', (e) => {
             if (e.target === emailModal) {
-                closeEmailModal();
+                closeLightbox();
             }
         });
 
@@ -541,7 +641,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Save the user's name and reg no for next time
             localStorage.setItem('userName', fromName);
             localStorage.setItem('userRegNo', regNo);
 
@@ -576,22 +675,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const body = modalEmailBody.value;
 
             if (!email || !body) {
-                return; // Do nothing if there's no recipient or body
+                return;
             }
 
             const encodedSubject = encodeURIComponent(subject);
             const encodedBody = encodeURIComponent(body);
-
             const mailtoLink = `mailto:${email}?subject=${encodedSubject}&body=${encodedBody}`;
-            
-            // This opens the default email client
             window.location.href = mailtoLink;
         });
     }
 
     // --- Initial Renders based on page ---
-    renderDeadlineCards(); // For home page
-    renderFacultyCards(); // For faculty page
-    renderRestaurantCards(); // For restaurants page
-    renderAnnouncements(); // For home page
+    renderDeadlineCards();
+    renderFacultyCards();
+    renderRestaurantCards();
+    renderAnnouncements();
+    renderGalleryImages();
 });
+
