@@ -1,4 +1,53 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- THEME (DARK/LIGHT) SETUP ---
+    const themeBtn = document.querySelector('.theme-switcher-btn');
+    const iconSun = document.querySelector('.theme-icon-sun');
+    const iconMoon = document.querySelector('.theme-icon-moon');
+
+    const applyTheme = (theme) => {
+        const htmlEl = document.documentElement; // <html>
+        if (theme === 'dark') {
+            htmlEl.classList.remove('light');
+            htmlEl.classList.add('dark');
+            if (iconSun) iconSun.classList.add('hidden');
+            if (iconMoon) iconMoon.classList.remove('hidden');
+        } else {
+            htmlEl.classList.remove('dark');
+            htmlEl.classList.add('light');
+            if (iconSun) iconSun.classList.remove('hidden');
+            if (iconMoon) iconMoon.classList.add('hidden');
+        }
+    };
+
+    // Determine initial theme: localStorage -> prefers-color-scheme -> default light
+    try {
+        const saved = localStorage.getItem('site-theme');
+        if (saved === 'dark' || saved === 'light') {
+            applyTheme(saved);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            applyTheme('dark');
+        } else {
+            applyTheme('light');
+        }
+    } catch (e) {
+        // If localStorage is unavailable, fallback to prefers-color-scheme
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            applyTheme('dark');
+        } else {
+            applyTheme('light');
+        }
+    }
+
+    if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+            const htmlEl = document.documentElement;
+            const isDark = htmlEl.classList.contains('dark');
+            const newTheme = isDark ? 'light' : 'dark';
+            applyTheme(newTheme);
+            try { localStorage.setItem('site-theme', newTheme); } catch (e) { /* ignore */ }
+        });
+    }
+
     // --- SUPABASE SETUP ---
     const SUPABASE_URL = 'https://syvpeftawfakdiebueji.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
@@ -93,12 +142,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- GOOGLE OAUTH HANDLER ---
     if(googleLoginBtn) {
         googleLoginBtn.addEventListener('click', async () => {
-            const { error } = await _supabase.auth.signInWithOAuth({
-                provider: 'google',
-            });
-    
-            if (error) {
-                showMessage(`Error: ${error.message}`, true);
+            try {
+                const redirectTo = window.location.origin + '/';
+                const { error } = await _supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo }
+                });
+
+                if (error) throw error;
+            } catch (err) {
+                showMessage(`Error: ${err?.message || err}`, true);
             }
         });
     }

@@ -1,23 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- SUPABASE SETUP ---
     let supabaseClient;
+    let supabaseInitError = null;
     try {
         const SUPABASE_URL = 'https://syvpeftawfakdiebueji.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
+        if (typeof supabase === 'undefined' || !supabase || typeof supabase.createClient !== 'function') {
+            throw new Error('Supabase library not loaded (supabase is undefined).');
+        }
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {
+        supabaseInitError = e?.message || String(e);
         console.error("Supabase not available or initialization failed:", e);
     }
 
     // --- Authentication Guard ---
     const protectPage = async () => {
-        if (!supabaseClient) return; 
-
-        const { data: { session } } = await supabaseClient.auth.getSession();
         const isLoginPage = window.location.pathname.includes('/login');
 
-        if (!session && !isLoginPage) {
-            window.location.href = '/login/';
+        // If the Supabase client failed to initialize, treat as unauthenticated and redirect to login
+        if (!supabaseClient) {
+            console.warn('Supabase client not initialized. supabaseInitError=', supabaseInitError);
+            if (!isLoginPage) window.location.href = '/login/';
+            return;
+        }
+
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session && !isLoginPage) {
+                window.location.href = '/login/';
+            }
+        } catch (e) {
+            console.error('Error checking session:', e);
+            if (!isLoginPage) window.location.href = '/login/';
         }
     };
     protectPage();
@@ -448,7 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return; 
 
         if (!supabaseClient) {
-             container.innerHTML = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Supabase client not initialized.</p></div>`;
+             const details = supabaseInitError ? ` (${supabaseInitError})` : '';
+             container.innerHTML = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Supabase client not initialized${details}.</p></div>`;
             return;
         };
         
