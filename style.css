@@ -121,3 +121,19 @@ body {
     transform: scale(1);
     opacity: 1;
 }
+
+/* ADDED: Styles for the profile dropdown menu */
+.profile-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem; /* 8px */
+    width: 16rem; /* 256px */
+    origin-top-right: right;
+    border-radius: 0.5rem; /* 8px */
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    z-index: 50;
+}
+

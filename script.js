@@ -9,6 +9,147 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Supabase not available or initialization failed:", e);
     }
 
+    // --- Authentication Guard ---
+    const protectPage = async () => {
+        if (!supabaseClient) return; 
+
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const isLoginPage = window.location.pathname.includes('/login');
+
+        if (!session && !isLoginPage) {
+            window.location.href = '/login/';
+        }
+    };
+    protectPage();
+
+    // --- PROFILE & LOGOUT ---
+    const profileBtn = document.getElementById('profile-btn');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileDropdownContainer = document.getElementById('profile-dropdown-container');
+    const logoutBtnDesktop = document.getElementById('logout-btn-desktop');
+    const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+
+    const handleLogout = async () => {
+        if (!supabaseClient) return;
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            console.error('Error logging out:', error);
+        } else {
+            window.location.href = '/login/';
+        }
+    };
+    
+    // --- REFACTORED PROFILE LOGIC ---
+
+    const updateProfileDOM = (user) => {
+        if (!user) return;
+        
+        const email = user.email;
+        const phone = user.user_metadata?.phone || 'Not available';
+        const name = user.user_metadata?.full_name || email.split('@')[0];
+        const initial = name ? name.charAt(0).toUpperCase() : '?';
+
+        document.getElementById('profile-initial').textContent = initial;
+        document.getElementById('profile-name').textContent = name;
+        document.getElementById('profile-email').textContent = email;
+        document.getElementById('profile-phone').textContent = `Contact: ${phone}`;
+
+        document.getElementById('mobile-profile-initial').textContent = initial;
+        document.getElementById('mobile-profile-name').textContent = name;
+        document.getElementById('mobile-profile-email').textContent = email;
+    };
+    
+    const setupNameEditing = () => {
+        const editNameBtn = document.getElementById('edit-name-btn');
+        const saveNameBtn = document.getElementById('save-name-btn');
+        const cancelEditNameBtn = document.getElementById('cancel-edit-name-btn');
+        const editNameForm = document.getElementById('edit-name-form');
+        const editNameInput = document.getElementById('edit-name-input');
+        const nameDisplayContainer = document.getElementById('name-display-container');
+        const mobileEditNameBtn = document.getElementById('mobile-edit-name-btn');
+        const mobileSaveNameBtn = document.getElementById('mobile-save-name-btn');
+        const mobileCancelEditNameBtn = document.getElementById('mobile-cancel-edit-name-btn');
+        const mobileEditNameForm = document.getElementById('mobile-edit-name-form');
+        const mobileEditNameInput = document.getElementById('mobile-edit-name-input');
+        const mobileNameDisplay = document.getElementById('mobile-name-display');
+
+        const startEditingName = () => {
+            const currentName = document.getElementById('profile-name').textContent;
+            editNameInput.value = currentName;
+            mobileEditNameInput.value = currentName;
+            nameDisplayContainer.classList.add('hidden');
+            editNameForm.classList.remove('hidden');
+            mobileNameDisplay.classList.add('hidden');
+            mobileEditNameForm.classList.remove('hidden');
+        };
+
+        const cancelEditingName = () => {
+            nameDisplayContainer.classList.remove('hidden');
+            editNameForm.classList.add('hidden');
+            mobileNameDisplay.classList.remove('hidden');
+            mobileEditNameForm.classList.add('hidden');
+        };
+
+        const saveNewName = async () => {
+            const newName = (mobileEditNameForm.classList.contains('hidden') ? editNameInput.value : mobileEditNameInput.value).trim();
+            if (!newName) return;
+
+            saveNameBtn.disabled = true;
+            mobileSaveNameBtn.disabled = true;
+            saveNameBtn.textContent = 'Saving...';
+            mobileSaveNameBtn.textContent = 'Saving...';
+
+            const { data, error } = await supabaseClient.auth.updateUser({
+                data: { full_name: newName }
+            });
+
+            if (error) {
+                console.error('Error updating name:', error);
+            } else if (data.user) {
+                updateProfileDOM(data.user);
+            }
+            
+            saveNameBtn.disabled = false;
+            mobileSaveNameBtn.disabled = false;
+            saveNameBtn.textContent = 'Save';
+            mobileSaveNameBtn.textContent = 'Save';
+            cancelEditingName();
+        };
+
+        if(editNameBtn) editNameBtn.addEventListener('click', startEditingName);
+        if(cancelEditNameBtn) cancelEditNameBtn.addEventListener('click', cancelEditingName);
+        if(saveNameBtn) saveNameBtn.addEventListener('click', saveNewName);
+
+        if(mobileEditNameBtn) mobileEditNameBtn.addEventListener('click', startEditingName);
+        if(mobileCancelEditNameBtn) mobileCancelEditNameBtn.addEventListener('click', cancelEditingName);
+        if(mobileSaveNameBtn) mobileSaveNameBtn.addEventListener('click', saveNewName);
+    };
+
+    const initializeProfile = async () => {
+        if (!supabaseClient || !profileDropdownContainer) return;
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        if (user) {
+            updateProfileDOM(user);
+            profileDropdownContainer.classList.remove('hidden');
+            setupNameEditing();
+        }
+    };
+
+    // --- INITIAL CALLS ---
+    initializeProfile();
+    if (logoutBtnDesktop) logoutBtnDesktop.addEventListener('click', handleLogout);
+    if (logoutBtnMobile) logoutBtnMobile.addEventListener('click', handleLogout);
+
+    document.addEventListener('click', (event) => {
+        if (!profileBtn || !profileDropdown) return;
+        const isClickInsideButton = profileBtn.contains(event.target);
+        if (isClickInsideButton) {
+            profileDropdown.classList.toggle('hidden');
+        } else if (!profileDropdown.contains(event.target)) {
+            profileDropdown.classList.add('hidden');
+        }
+    });
 
     // --- DATA (Static) ---
      const faculty = [
@@ -77,11 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const normalizePath = (p) => {
         if (!p) return '/';
-        // Remove search and hash
         p = p.split('?')[0].split('#')[0];
-        // Treat index.html and trailing slash as equivalent
         p = p.replace(/index\.html$/i, '');
-        // Remove trailing slash except for root
         if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
         return p || '/';
     };
@@ -93,13 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const linkHref = link.getAttribute('href');
             const linkPath = normalizePath(linkHref);
             link.classList.remove('active');
-
-            // Exact match or current path starts with link path (for sections)
             if (linkPath === '/' && currentPath === '/') {
                 link.classList.add('active');
             } else if (linkPath !== '/' && (currentPath === linkPath || currentPath.startsWith(linkPath + '/'))) {
-                link.classList.add('active');
-            } else if (linkPath !== '/' && currentPath === linkPath) {
                 link.classList.add('active');
             }
         });
@@ -113,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close mobile menu when a nav link is clicked (good UX on mobile)
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
