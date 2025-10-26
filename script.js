@@ -15,9 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Sandeep Sir', subject: 'EVS', contact: '+91 9164489836', cabin: 'AB2 Basement', email: 'sandeep.gs@manipal.edu' },
         { name: 'Shobha Ma\'am', subject: 'Maths', contact: '+91 9591474101', cabin: 'N/A', email: 'shobha.me@manipal.edu' },
         { name: 'Sowmya Ma\'am', subject: 'Chem', contact: '+91 9686781587', cabin: 'N/A', email: 'sowmya.achar@manipal.edu' },
-        { name: 'Anandh Sir', subject: 'FEE', contact: '+91 9787934850', cabin: 'N/A', email: 'anandh.n@manipal.edu' },
+        // CORRECTED: Anandh Sir's cabin is AB1
+        { name: 'Anandh Sir', subject: 'FEE', contact: '+91 9787934850', cabin: 'AB1', email: 'anandh.n@manipal.edu' },
         { name: 'Bhagyashree Ma\'am', subject: 'EMSB', contact: '+91 8277511547', cabin: 'AB2 Basement', email: 'bhagyalaxmi.kh@manipal.edu' },
         { name: 'Sujithra Ma\'am', subject: 'PPS', contact: '+91 9047756324', cabin: 'AB5', email: 't.sujithra@manipal.edu' },
+        // REORDERED: Aruna Prabhu is now listed before Pavan and Girish
+        { name: 'Aruna Prabhu', subject: 'CAEG', contact: '+91 9743593045', cabin: 'Cabin6, Chamber 2A, AB1', email: 'aruna.prabhu@manipal.edu' },
+        { name: 'Pavan Sir', subject: 'CAEG', contact: '+91 9620819669', cabin: 'N/A', email: 'N/A' },
+        { name: 'Girish Sir', subject: 'CAEG', contact: '+91 8951811729', cabin: 'N/A', email: 'N/A' },
     ];
     const restaurants = [
         { name: 'Taco House', contact: '+91 7795815315' },
@@ -719,4 +724,3 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAnnouncements();
     renderGalleryImages();
 });
-
