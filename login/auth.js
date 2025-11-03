@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- SUPABASE SETUP ---
     const SUPABASE_URL = 'https://syvpeftawfakdiebueji.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIZDI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
 
     const { createClient } = supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -43,8 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 options: {
                     data: {
                         full_name: name,
-                        phone: phone, 
-                    }
+                        phone: phone 
+                    },
+                    // --- THIS IS THE NEW LINE ---
+                    redirectTo: `${window.location.origin}/signup-success.html`
+                    // --------------------------
                 }
             });
     
@@ -103,8 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    // --- SESSION CHECK ---  <-- I HAVE REMOVED THE CODE BLOCK THAT WAS HERE
-    
+    // --- NO SESSION CHECK HERE ---
+    // (This was intentionally removed to fix the redirect loop on this page)
 });
 
