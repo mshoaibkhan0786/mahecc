@@ -29,7 +29,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload the entire repository as the artifact
-          path: './CC Live till Login Page'
+          path: '.' # <-- THIS IS THE FIX (was './CC Live till Login Page')
 
   # Deployment job
   deploy:
@@ -42,3 +42,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
