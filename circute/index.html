@@ -14,7 +14,6 @@
 </head>
 <body class="antialiased">
     <div id="app">
-        <!-- Header & Navigation -->
         <header class="bg-[var(--nav-bg)] shadow-md fixed w-full top-0 z-50 transition-colors duration-300">
             <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
@@ -26,7 +25,6 @@
                                </svg>
                         </div>
                         <div class="ml-4">
-                            <!-- Desktop Nav -->
                             <div class="hidden md:flex items-baseline space-x-4">
                                 <a href="/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Home</a>
                                 <a href="/timetable/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Timetable</a>
@@ -37,66 +35,90 @@
                                 <a href="/gallery/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors">Gallery</a>
                                 <a href="/circute/" class="nav-link px-3 py-2 rounded-md text-sm transition-colors active">Circute AI</a>
                             </div>
-                            <!-- Mobile Visible Nav -->
-                            <div class="flex md:hidden items-baseline space-x-1">
-                                <a href="/" class="nav-link px-2 py-2 rounded-md text-sm transition-colors">Home</a>
-                                <a href="/timetable/" class="nav-link px-2 py-2 rounded-md text-sm transition-colors">Timetable</a>
-                                <a href="/faculty/" class="nav-link px-2 py-2 rounded-md text-sm transition-colors">Faculty</a>
-                            </div>
                         </div>
                     </div>
                     <div class="flex items-center">
-                         <!-- Desktop Theme Switcher -->
-                         <button class="theme-switcher-btn bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)] hidden md:block">
-                             <svg class="theme-icon-sun h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                             <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        <button class="theme-switcher-btn bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)] hidden md:block">
+                            <svg class="theme-icon-sun h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         </button>
-                         <div class="ml-2 flex md:hidden">
-                            <button id="mobile-menu-button" type="button" class="bg-[var(--card-bg)] inline-flex items-center justify-center p-2 rounded-md text-[var(--text-color)] hover:bg-[var(--bg-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--card-bg)] focus:ring-[var(--accent-color)]">
-                                <span class="sr-only">Open main menu</span>
-                                <svg id="menu-open-icon" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                                <svg id="menu-close-icon" class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        
+                        <!-- ADDED: Login Button (will be hidden by JS if logged in) -->
+                        <a id="login-btn-header" href="/login/" class="ml-4 bg-[var(--accent-color)] hover:opacity-90 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 duration-300 text-sm md:block">
+                            Login
+                        </a>
+
+                        <!-- ADDED: Profile Dropdown (hidden by default) -->
+                        <div class="relative hidden md:block ml-4" id="profile-dropdown-container">
+                             <button id="profile-btn" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)] focus-outline">
+                                <span class="sr-only">Open user menu</span>
+                                <div class="h-8 w-8 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white font-bold" id="profile-initial">
+                                    ?
+                                </div>
                             </button>
+                            <div id="profile-dropdown" class="profile-dropdown-menu hidden">
+                                <div class="px-4 py-3">
+                                    <p class="text-sm font-semibold text-[var(--header-text)]" id="profile-name">Loading...</p>
+                                    <p class="text-sm text-gray-500 truncate" id="profile-email">...</p>
+                                    <p class="text-sm text-gray-500 truncate" id="profile-phone">...</p>
+                                </div>
+                                <div class="py-1 border-t border-[var(--border-color)]">
+                                    <button id="logout-btn-desktop" class="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-[var(--bg-color)] focus-outline">Sign out</button>
+                                </div>
+                            </div>
                         </div>
+
+                        <button id="mobile-menu-button" type="button" class="md:hidden ml-2 bg-[var(--card-bg)] inline-flex items-center justify-center p-2 rounded-md text-[var(--text-color)] hover:bg-[var(--bg-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--card-bg)] focus:ring-[var(--accent-color)]">
+                            <svg id="menu-open-icon" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            <svg id="menu-close-icon" class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
                     </div>
                 </div>
             </nav>
-            <!-- Mobile menu -->
             <div id="mobile-menu" class="md:hidden hidden">
-                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                    <a href="/calendar/" class="nav-link block px-3 py-2 rounded-md text-base">Calendar</a>
-                    <a href="/studymaterial/" class="nav-link block px-3 py-2 rounded-md text-base">Study Material</a>
-                    <a href="/restaurants/" class="nav-link block px-3 py-2 rounded-md text-base">Restaurants</a>
-                    <a href="/gallery/" class="nav-link block px-3 py-2 rounded-md text-base">Gallery</a>
-                    <a href="/circute/" class="nav-link block px-3 py-2 rounded-md text-base active">Circute AI</a>
+                <!-- ADDED: Mobile Profile/Login Section -->
+                <div class="px-5 pt-4 pb-3 border-b border-[var(--border-color)]">
+                     <a id="login-btn-mobile" href="/login/" class="bg-[var(--accent-color)] hover:opacity-90 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 duration-300 text-sm w-full text-center block">
+                        Login / Sign Up
+                    </a>
+                    <div class="flex items-center hidden" id="mobile-profile-info-block">
+                         <div class="flex-shrink-0 h-10 w-10 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white font-bold" id="mobile-profile-initial">?</div>
+                        <div class="ml-3 flex-grow min-w-0">
+                            <p class="text-base font-semibold text-[var(--header-text)] truncate" id="mobile-profile-name">Loading...</p>
+                            <p class="text-sm text-gray-500 truncate" id="mobile-profile-email">...</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="border-t border-[var(--border-color)] px-5 py-3">
-                    <div class="flex items-center justify-between">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors">Home</a>
+                    <a href="/timetable/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors">Timetable</a>
+                    <a href="/faculty/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors">Faculty</a>
+                    <a href="/calendar/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors">Calendar</a>
+                    <a href="/studymaterial/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors">Study Material</a>
+                    <a href="/restaurants/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors">Restaurants</a>
+                    <a href="/gallery/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors">Gallery</a>
+                    <a href="/circute/" class="nav-link block px-3 py-2 rounded-md text-base transition-colors active">Circute AI</a>
+                </div>
+                <div class="border-t border-[var(--border-color)] px-2 py-3 space-y-2">
+                    <div class="flex items-center justify-between px-3">
                         <span class="font-medium text-base text-[var(--text-color)]">Toggle Theme</span>
                         <button class="theme-switcher-btn bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)]">
                             <svg class="theme-icon-sun h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                             <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                            <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         </button>
                     </div>
+                    <!-- ADDED: Mobile Logout Button -->
+                    <button id="logout-btn-mobile" class="w-full text-left block px-3 py-2 text-base text-red-600 rounded-md hover:bg-[var(--bg-color)] focus-outline">Sign out</button>
                 </div>
             </div>
         </header>
 
         <main class="main-content-area max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <section id="circute-ai">
-                 <header class="mb-8">
-                    <h1 class="text-3xl font-bold text-[var(--header-text)]">Circute AI</h1>
-                </header>
-                <!-- Gemini AI Study Helper -->
-                <div id="study-helper" class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] p-4 sm:p-6">
-                    <div class="flex items-center gap-4 mb-4">
-                        <h2 class="text-2xl font-bold text-[var(--header-text)]">✨ AI Study Helper</h2>
-                    </div>
-                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">Ask me anything about your subjects! I can help explain concepts, give you practice problems, or summarize topics.</p>
-            
-                    <!-- Chat messages display -->
-                        <div id="chat-messages" class="h-96 overflow-y-auto p-4 bg-[var(--bg-color)] rounded-lg mb-4 space-y-4">
-                        <!-- Example AI message -->
+            <section id="study-helper">
+                <div class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] p-4 sm:p-6">
+                    <h2 class="text-2xl font-bold text-[var(--header-text)] mb-4">✨ AI Study Helper</h2>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">Ask me anything!</p>
+                    <div id="chat-messages" class="h-96 overflow-y-auto p-4 bg-[var(--bg-color)] rounded-lg mb-4 space-y-4">
                         <div class="flex items-start gap-3">
                             <span class="flex-shrink-0 h-8 w-8 rounded-full bg-[var(--accent-color)]/20 flex items-center justify-center text-[var(--accent-color)] font-bold">AI</span>
                             <div class="bg-[var(--card-bg)] p-3 rounded-lg border border-[var(--border-color)]">
@@ -104,15 +126,11 @@
                             </div>
                         </div>
                     </div>
-            
-                    <!-- Prompt suggestions -->
                     <div class="mb-4 flex flex-wrap gap-2">
                          <button class="prompt-suggestion-btn">Explain recursion in PPS</button>
                          <button class="prompt-suggestion-btn">Summarize Newton's Laws</button>
                          <button class="prompt-suggestion-btn">Practice problem for differentiation</button>
                     </div>
-            
-                    <!-- Chat input -->
                     <div class="flex gap-2">
                         <input type="text" id="chat-input" placeholder="Type your question here..." class="flex-grow bg-[var(--bg-color)] border border-[var(--border-color)] rounded-lg p-3 focus:ring-2 focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] transition duration-200">
                         <button id="send-chat-btn" class="bg-[var(--accent-color)] hover:opacity-90 text-white font-bold py-3 px-5 rounded-lg transition-transform transform hover:scale-105 duration-300 flex items-center justify-center">
@@ -130,6 +148,7 @@
             <p class="text-sm text-gray-400 dark:text-gray-500 opacity-75">Built by Mohammad Shoaib Khan</p>
         </footer>
     </div>
+    <!-- REMOVED conflicting SW registration script -->
     <script src="../script.js"></script>
 </body>
 </html>

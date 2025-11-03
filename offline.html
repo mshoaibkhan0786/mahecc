@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - MIT Manipal CSE Section CC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .offline-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-md w-full text-center">
+        <!-- Logo -->
+        <div class="mb-8 flex justify-center offline-animation">
+            <svg class="h-16 w-16" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100" height="100" rx="20" fill="#6d28d9"/>
+                <path fill="white" d="M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z"/>
+            </svg>
+        </div>
+
+        <!-- Offline Content -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+            <!-- Icon -->
+            <div class="mb-6">
+                <div class="mx-auto w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center offline-animation">
+                    <svg class="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Message -->
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                You're Offline
+            </h1>
+            
+            <p class="text-gray-600 dark:text-gray-300 mb-2">
+                It looks like you've lost your internet connection.
+            </p>
+            
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">
+                Some features may not be available until you're back online.
+            </p>
+
+            <!-- Connection Status -->
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-6">
+                <div class="flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <span class="text-sm text-yellow-700 dark:text-yellow-300" id="connection-status">Checking connection...</span>
+                </div>
+            </div>
+
+            <!-- Cached Pages Navigation -->
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-gray-900 dark:text-white mb-3 text-sm">Try these cached pages:</h3>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <a href="/" class="bg-white dark:bg-gray-600 p-2 rounded border hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500">Home</a>
+                    <a href="/timetable/" class="bg-white dark:bg-gray-600 p-2 rounded border hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500">Timetable</a>
+                    <a href="/faculty/" class="bg-white dark:bg-gray-600 p-2 rounded border hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500">Faculty</a>
+                    <a href="/calendar/" class="bg-white dark:bg-gray-600 p-2 rounded border hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500">Calendar</a>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-3">
+                <button onclick="window.location.reload()" 
+                        class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Try Again
+                </button>
+                
+                <button onclick="window.history.back()" 
+                        class="w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                    Go Back
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="mt-6 text-xs text-gray-500 dark:text-gray-400">
+            MIT Manipal CSE Section CC • Built by Mohammad Shoaib Khan
+        </p>
+    </div>
+
+    <script>
+        // Enhanced offline functionality
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connection-status');
+            if (navigator.onLine) {
+                statusElement.textContent = 'You are back online!';
+                statusElement.className = 'text-sm text-green-700 dark:text-green-300';
+                
+                // Add a small delay before reloading to show the status change
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                statusElement.textContent = 'You are currently offline';
+                statusElement.className = 'text-sm text-yellow-700 dark:text-yellow-300';
+            }
+        }
+
+        // Initial status check
+        updateConnectionStatus();
+
+        // Listen for connection changes
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Periodically check connection (fallback)
+        setInterval(updateConnectionStatus, 5000);
+        
+        // Log current URL for debugging
+        console.log('Offline page loaded. Current URL:', window.location.href);
+        console.log('Online status:', navigator.onLine);
+
+        // Service Worker check
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                console.log('Service Worker is ready:', registration);
+            });
+        }
+    </script>
+</body>
+</html>

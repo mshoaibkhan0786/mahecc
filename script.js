@@ -1,4 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- SERVICE WORKER REGISTRATION (FIXED PATH) ---
+    if ('serviceWorker' in navigator) {
+        // Use relative path to work on localhost and live server
+        navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
+
+    // --- GLOBAL ERROR HANDLING ---
+    const setupErrorHandling = () => {
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+            e.preventDefault();
+        });
+    };
+
+    setupErrorHandling();
+
     // --- SUPABASE SETUP ---
     let supabaseClient;
     try {
@@ -9,21 +35,116 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Supabase not available or initialization failed:", e);
     }
 
+    // --- *** NEW UPDATED AUTH UI FUNCTION *** ---
+    const setupAuthUI = async () => {
+        // --- Get all UI elements ---
+        // Desktop
+        const loginBtnHeader = document.getElementById('login-btn-header');
+        const profileDropdownContainer = document.getElementById('profile-dropdown-container');
+        const profileBtn = document.getElementById('profile-btn');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        const profileInitial = document.getElementById('profile-initial');
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
+        const profilePhone = document.getElementById('profile-phone');
+        const logoutBtnDesktop = document.getElementById('logout-btn-desktop');
 
+        // Mobile
+        const loginBtnMobile = document.getElementById('login-btn-mobile');
+        const mobileProfileInfoBlock = document.getElementById('mobile-profile-info-block'); // Main info div
+        const mobileProfileInitial = document.getElementById('mobile-profile-initial');
+        const mobileProfileName = document.getElementById('mobile-profile-name');
+        const mobileProfileEmail = document.getElementById('mobile-profile-email');
+        const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+
+        // --- Check Supabase session ---
+        if (!supabaseClient) return; // Supabase failed to init
+        const { data: { session } } = await supabaseClient.auth.getSession();
+
+        if (session) {
+            // --- USER IS LOGGED IN ---
+            const user = session.user;
+            const metadata = user.user_metadata;
+            const userName = metadata.full_name || metadata.name || 'User';
+            const userEmail = user.email;
+            const userPhone = metadata.phone || '...';
+            const userInitial = userName ? userName.charAt(0).toUpperCase() : '?';
+
+            // 1. Toggle UI visibility (NEW LOGIC)
+            if (loginBtnHeader) {
+                loginBtnHeader.classList.add('hidden');
+                loginBtnHeader.classList.remove('md:block'); // Force hide
+            }
+            if (profileDropdownContainer) {
+                profileDropdownContainer.classList.remove('hidden'); // Show
+            }
+            if (loginBtnMobile) loginBtnMobile.classList.add('hidden');
+            if (mobileProfileInfoBlock) mobileProfileInfoBlock.classList.remove('hidden');
+
+            // 2. Populate Desktop Profile
+            if (profileInitial) profileInitial.textContent = userInitial;
+            if (profileName) profileName.textContent = userName;
+            if (profileEmail) profileEmail.textContent = userEmail;
+            if (profilePhone) profilePhone.textContent = userPhone;
+
+            // 3. Populate Mobile Profile
+            if (mobileProfileInitial) mobileProfileInitial.textContent = userInitial;
+            if (mobileProfileName) mobileProfileName.textContent = userName;
+            if (mobileProfileEmail) mobileProfileEmail.textContent = userEmail;
+
+            // 4. Add Logout Handlers
+            const handleLogout = async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = '/login/'; // Redirect to login page
+            };
+            if (logoutBtnDesktop) logoutBtnDesktop.addEventListener('click', handleLogout);
+            if (logoutBtnMobile) logoutBtnMobile.addEventListener('click', handleLogout);
+
+            // 5. Add Profile Dropdown Toggle
+            if (profileBtn && profileDropdown) {
+                profileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent click from closing it immediately
+                    profileDropdown.classList.toggle('hidden');
+                });
+                // Close dropdown if clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!profileDropdown.classList.contains('hidden') && !profileBtn.contains(e.target)) {
+                        profileDropdown.classList.add('hidden');
+                    }
+                });
+            }
+        
+        // (You can add your name/phone edit logic here too)
+
+        } else {
+            // --- USER IS LOGGED OUT ---
+            
+            // 1. Toggle UI visibility (NEW LOGIC)
+            if (loginBtnHeader) {
+                loginBtnHeader.classList.remove('hidden');
+                loginBtnHeader.classList.add('md:block'); // Force show on desktop
+            }
+            if (profileDropdownContainer) {
+                profileDropdownContainer.classList.add('hidden'); // Force hide
+            }
+            if (loginBtnMobile) loginBtnMobile.classList.remove('hidden');
+            if (mobileProfileInfoBlock) mobileProfileInfoBlock.classList.add('hidden');
+        }
+    };
+    
     // --- DATA (Static) ---
-     const faculty = [
+    const faculty = [
         { name: 'Sandeep Sir', subject: 'EVS', contact: '+91 9164489836', cabin: 'AB2 Basement', email: 'sandeep.gs@manipal.edu' },
         { name: 'Shobha Ma\'am', subject: 'Maths', contact: '+91 9591474101', cabin: 'N/A', email: 'shobha.me@manipal.edu' },
         { name: 'Sowmya Ma\'am', subject: 'Chem', contact: '+91 9686781587', cabin: 'N/A', email: 'sowmya.achar@manipal.edu' },
-        // CORRECTED: Anandh Sir's cabin is AB1
         { name: 'Anandh Sir', subject: 'FEE', contact: '+91 9787934850', cabin: 'AB1', email: 'anandh.n@manipal.edu' },
         { name: 'Bhagyashree Ma\'am', subject: 'EMSB', contact: '+91 8277511547', cabin: 'AB2 Basement', email: 'bhagyalaxmi.kh@manipal.edu' },
         { name: 'Sujithra Ma\'am', subject: 'PPS', contact: '+91 9047756324', cabin: 'AB5', email: 't.sujithra@manipal.edu' },
-        // REORDERED: Aruna Prabhu is now listed before Pavan and Girish
         { name: 'Aruna Prabhu', subject: 'CAEG', contact: '+91 9743593045', cabin: 'Cabin6, Chamber 2A, AB1', email: 'aruna.prabhu@manipal.edu' },
         { name: 'Pavan Sir', subject: 'CAEG', contact: '+91 9620819669', cabin: 'N/A', email: 'N/A' },
         { name: 'Girish Sir', subject: 'CAEG', contact: '+91 8951811729', cabin: 'N/A', email: 'N/A' },
     ];
+
     const restaurants = [
         { name: 'Taco House', contact: '+91 7795815315' },
         { name: 'Hungry House', contact: '+91 9820243177' },
@@ -41,6 +162,56 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     
     const today = new Date();
+
+    // --- PERFORMANCE OPTIMIZATIONS ---
+    const setupLazyLoading = () => {
+        const images = document.querySelectorAll('img[data-src]');
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy');
+                    img.classList.add('loaded');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+
+        images.forEach(img => imageObserver.observe(img));
+    };
+
+    // --- ENHANCED DATA FETCHING WITH CACHING ---
+    const cachedFetch = async (key, fetchFunction, ttl = 5 * 60 * 1000) => {
+        const cached = localStorage.getItem(key);
+        const now = Date.now();
+        
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (now - timestamp < ttl) {
+                return data;
+            }
+        }
+        
+        const freshData = await fetchFunction();
+        localStorage.setItem(key, JSON.stringify({
+            data: freshData,
+            timestamp: now
+        }));
+        
+        return freshData;
+    };
+
+    const fetchWithRetry = async (fetchFunction, retries = 3, delay = 1000) => {
+        for (let i = 0; i < retries; i++) {
+            try {
+                return await fetchFunction();
+            } catch (error) {
+                if (i === retries - 1) throw error;
+                await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+            }
+        }
+    };
 
     // --- THEME SWITCHER ---
     const themeSwitchers = document.querySelectorAll('.theme-switcher-btn');
@@ -73,6 +244,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
+    // --- ENHANCED MOBILE NAVIGATION ---
+    const setupMobileMenu = () => {
+        const mobileMenuBtn = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuBtn && mobileMenu) {
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target) && !mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                    document.getElementById('menu-open-icon').classList.remove('hidden');
+                    document.getElementById('menu-close-icon').classList.add('hidden');
+                }
+            });
+
+            // Close on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                    document.getElementById('menu-open-icon').classList.remove('hidden');
+                    document.getElementById('menu-close-icon').classList.add('hidden');
+                }
+            });
+        }
+    };
+
     // --- PAGE NAVIGATION & ACTIVE LINKS ---
     const navLinks = document.querySelectorAll('.nav-link');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -82,11 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const normalizePath = (p) => {
         if (!p) return '/';
-        // Remove search and hash
         p = p.split('?')[0].split('#')[0];
-        // Treat index.html and trailing slash as equivalent
         p = p.replace(/index\.html$/i, '');
-        // Remove trailing slash except for root
         if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
         return p || '/';
     };
@@ -99,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const linkPath = normalizePath(linkHref);
             link.classList.remove('active');
 
-            // Exact match or current path starts with link path (for sections)
             if (linkPath === '/' && currentPath === '/') {
                 link.classList.add('active');
             } else if (linkPath !== '/' && (currentPath === linkPath || currentPath.startsWith(linkPath + '/'))) {
@@ -118,7 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close mobile menu when a nav link is clicked (good UX on mobile)
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
@@ -130,9 +322,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     setActiveLink();
+    setupMobileMenu();
 
+    // --- SEARCH FUNCTIONALITY ---
+    const setupSearch = () => {
+        const searchInput = document.getElementById('search-input');
+        if (!searchInput) return;
 
-    // --- DYNAMIC CONTENT RENDERING ---
+        const performSearch = (searchTerm) => {
+            // Search faculty
+            const facultyCards = document.querySelectorAll('#faculty-container > div');
+            facultyCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+            });
+
+            // Search restaurants
+            const restaurantCards = document.querySelectorAll('#restaurants-container > div');
+            restaurantCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+            });
+        };
+
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            performSearch(searchTerm);
+        });
+
+        // Clear search when page changes
+        window.addEventListener('beforeunload', () => {
+            searchInput.value = '';
+        });
+    };
+
+    // --- DYNAMIC CONTENT RENDERING WITH LOADING STATES ---
     const renderDeadlineCards = async () => {
         const assignmentsContainer = document.querySelector('#assignments .space-y-4');
         const quizzesContainer = document.querySelector('#quizzes .space-y-4');
@@ -140,13 +364,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!assignmentsContainer || !quizzesContainer) return;
 
         if (!supabaseClient) {
-            const errorHtml = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Supabase client not initialized. Cannot load deadlines.</p></div>`;
+            const errorHtml = `<div class="error-message" role="alert"><p>Supabase client not initialized. Cannot load deadlines.</p></div>`;
             assignmentsContainer.innerHTML = errorHtml;
             quizzesContainer.innerHTML = errorHtml;
             return;
         }
 
-        const loadingHtml = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)]"><p class="text-sm text-gray-500 dark:text-gray-400">Loading...</p></div>`;
+        const loadingHtml = `<div class="skeleton-loader rounded-lg h-32"></div>`;
         assignmentsContainer.innerHTML = loadingHtml;
         quizzesContainer.innerHTML = loadingHtml;
 
@@ -183,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             return `
-                <div class="bg-[var(--card-bg)] rounded-lg p-4 shadow-md border border-[var(--border-color)]">
+                <div class="bg-[var(--card-bg)] rounded-lg p-4 shadow-md border border-[var(--border-color)] hover-lift fade-in">
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="font-bold text-lg text-[var(--header-text)]">${item.subject || 'N/A'}</p>
@@ -196,10 +420,15 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const { data: assignments, error: assignmentsError } = await supabaseClient.from('assignments').select('*');
-            if (assignmentsError) throw assignmentsError;
+            const fetchAssignments = () => supabaseClient.from('assignments').select('*');
+            const fetchQuizzes = () => supabaseClient.from('quizzes').select('*');
 
-            const { data: quizzes, error: quizzesError } = await supabaseClient.from('quizzes').select('*');
+            const [{ data: assignments, error: assignmentsError }, { data: quizzes, error: quizzesError }] = await Promise.all([
+                fetchWithRetry(fetchAssignments),
+                fetchWithRetry(fetchQuizzes)
+            ]);
+
+            if (assignmentsError) throw assignmentsError;
             if (quizzesError) throw quizzesError;
 
             assignmentsContainer.innerHTML = '';
@@ -216,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     assignmentsContainer.innerHTML += createCard(ass);
                 });
             } else {
-                assignmentsContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Assignments</h2></div>`;
+                assignmentsContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48 fade-in"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Assignments</h2></div>`;
             }
             
             const sortedQuizzes = (quizzes || []).sort((a, b) => {
@@ -230,12 +459,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     quizzesContainer.innerHTML += createCard(quiz);
                 });
             } else {
-                quizzesContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Quizzes</h2></div>`;
+                quizzesContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48 fade-in"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Quizzes</h2></div>`;
             }
 
         } catch(error) {
             console.error("Error fetching deadline data:", error);
-            const errorHtml = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Could not load data. Check RLS policies.</p></div>`;
+            const errorHtml = `<div class="error-message" role="alert"><p>Could not load data. Please check your connection.</p></div>`;
             assignmentsContainer.innerHTML = errorHtml;
             quizzesContainer.innerHTML = errorHtml;
         }
@@ -245,22 +474,43 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.querySelector('#faculty-container');
         if (!container) return; 
 
+        // Add search functionality if on faculty page
+        const searchHtml = `
+            <div class="mb-6">
+                <div class="relative max-w-md">
+                    <input 
+                        type="text" 
+                        id="search-input"
+                        placeholder="Search faculty..." 
+                        class="search-input w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--card-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] focus-outline"
+                    >
+                    <svg class="search-icon h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+        `;
+
+        if (window.location.pathname.includes('/faculty/')) {
+            container.insertAdjacentHTML('beforebegin', searchHtml);
+        }
+
         container.innerHTML = '';
         faculty.forEach(f => {
             const emailButtonHtml = f.email !== 'N/A' ? `
                 <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
-                    <button data-faculty-name="${f.name}" data-faculty-email="${f.email}" class="compose-email-btn w-full text-center bg-[var(--accent-color)]/10 text-[var(--accent-color)] font-semibold py-2 px-4 rounded-lg hover:bg-[var(--accent-color)] hover:text-white transition-colors duration-300 text-sm">
+                    <button data-faculty-name="${f.name}" data-faculty-email="${f.email}" class="compose-email-btn w-full text-center bg-[var(--accent-color)]/10 text-[var(--accent-color)] font-semibold py-2 px-4 rounded-lg hover:bg-[var(--accent-color)] hover:text-white transition-colors duration-300 text-sm focus-outline">
                         Compose Email
                     </button>
                 </div>
             ` : '';
 
             container.innerHTML += `
-                <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)] flex flex-col">
+                <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)] flex flex-col hover-lift fade-in">
                     <h3 class="text-xl font-bold text-[var(--header-text)]">${f.name}</h3>
                     <p class="text-[var(--accent-color)] font-semibold">${f.subject}</p>
                     <div class="mt-4 space-y-2 text-sm flex-grow">
-                        <a href="tel:${f.contact}" class="flex items-center text-[var(--accent-color)] hover:underline">
+                        <a href="tel:${f.contact}" class="flex items-center text-[var(--accent-color)] hover:underline focus-outline">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
                             ${f.contact}
                         </a>
@@ -268,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
                             ${f.cabin}
                         </p>
-                        <a href="${f.email !== 'N/A' ? 'mailto:' + f.email : '#'}" class="flex items-center ${f.email !== 'N/A' ? 'hover:underline text-[var(--accent-color)]' : 'cursor-default'}">
+                        <a href="${f.email !== 'N/A' ? 'mailto:' + f.email : '#'}" class="flex items-center ${f.email !== 'N/A' ? 'hover:underline text-[var(--accent-color)]' : 'cursor-default'} focus-outline">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>
                             ${f.email}
                         </a>
@@ -283,13 +533,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.querySelector('#restaurants-container');
         if (!container) return; 
 
+        // Add search functionality if on restaurants page
+        const searchHtml = `
+            <div class="mb-6">
+                <div class="relative max-w-md">
+                    <input 
+                        type="text" 
+                        id="search-input"
+                        placeholder="Search restaurants..." 
+                        class="search-input w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--card-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] focus-outline"
+                    >
+                    <svg class="search-icon h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+        `;
+
+        if (window.location.pathname.includes('/restaurants/')) {
+            container.insertAdjacentHTML('beforebegin', searchHtml);
+        }
+
         container.innerHTML = '';
         restaurants.forEach(r => {
             container.innerHTML += `
-                <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)]">
+                <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)] hover-lift fade-in">
                     <h3 class="text-xl font-bold text-[var(--header-text)]">${r.name}</h3>
                     <div class="mt-2 text-sm">
-                        <a href="tel:${r.contact}" class="flex items-center text-[var(--accent-color)] hover:underline">
+                        <a href="tel:${r.contact}" class="flex items-center text-[var(--accent-color)] hover:underline focus-outline">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
                             ${r.contact}
                         </a>
@@ -320,17 +591,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return; 
 
         if (!supabaseClient) {
-             container.innerHTML = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Supabase client not initialized.</p></div>`;
+             container.innerHTML = `<div class="error-message" role="alert"><p>Supabase client not initialized.</p></div>`;
             return;
         };
         
-        container.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)]"><p class="text-sm text-gray-500 dark:text-gray-400">Loading...</p></div>`;
+        container.innerHTML = `<div class="skeleton-loader rounded-lg h-20"></div>`;
 
         const handleUpdates = (data) => {
             if (!data || data.length === 0) {
                 container.innerHTML = `
-                    <div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48">
-                        <h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Announcement</h2>
+                    <div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48 fade-in">
+                        <h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Announcements</h2>
                     </div>`;
                 return;
             }
@@ -339,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).forEach(ann => {
                 const postTime = timeAgo(ann.created_at);
                 container.innerHTML += `
-                    <div class="bg-[var(--card-bg)] rounded-lg p-4 shadow-sm border border-[var(--border-color)] flex items-start space-x-3">
+                    <div class="bg-[var(--card-bg)] rounded-lg p-4 shadow-sm border border-[var(--border-color)] flex items-start space-x-3 hover-lift fade-in">
                         <div class="flex-shrink-0">
                             <div class="h-8 w-8 rounded-full bg-[var(--accent-color)]/20 flex items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--accent-color)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -356,12 +627,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
         
-        const { data, error } = await supabaseClient.from('announcements').select('*');
-        if (error) {
-               console.error("Supabase error:", error);
-               container.innerHTML = `<div class="bg-red-100 dark:bg-red-900/20 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg" role="alert"><p>Could not load announcements. Check RLS policies.</p></div>`;
-        } else {
-               handleUpdates(data);
+        try {
+            const { data, error } = await fetchWithRetry(() => supabaseClient.from('announcements').select('*'));
+            if (error) throw error;
+            handleUpdates(data);
+        } catch (error) {
+            console.error("Supabase error:", error);
+            container.innerHTML = `<div class="error-message" role="alert"><p>Could not load announcements. Please check your connection.</p></div>`;
         }
 
         if (supabaseClient) {
@@ -393,17 +665,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container || !placeholder || !lightboxModal) return;
     
         if (!supabaseClient) {
-            placeholder.innerHTML = `<h2 class="text-2xl font-bold text-red-500">Error: Supabase Not Ready</h2>`;
+            placeholder.innerHTML = `<div class="error-message"><h2 class="text-2xl font-bold">Error: Supabase Not Ready</h2></div>`;
             return;
         }
+    
+        // Show skeleton loading
+        container.innerHTML = `
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                ${Array.from({length: 8}, () => `
+                    <div class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] animate-pulse">
+                        <div class="h-48 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
     
         const BUCKET_NAME = 'gallery-images'; 
     
         try {
-            const { data: files, error } = await supabaseClient
-                .storage
-                .from(BUCKET_NAME)
-                .list('', { sortBy: { column: 'created_at', order: 'desc' } });
+            const { data: files, error } = await fetchWithRetry(() => 
+                supabaseClient.storage.from(BUCKET_NAME).list('', { 
+                    sortBy: { column: 'created_at', order: 'desc' } 
+                })
+            );
     
             if (error) throw error;
             
@@ -432,9 +716,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     imageUrls.push(publicUrlData.publicUrl);
 
                     const imageElement = document.createElement('div');
-                    imageElement.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden border border-[var(--border-color)]';
+                    imageElement.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden border border-[var(--border-color)] hover-lift fade-in';
                     imageElement.innerHTML = `
-                        <img src="${publicUrlData.publicUrl}" alt="Gallery thumbnail" class="w-full h-48 object-contain transition-transform duration-300 cursor-pointer">
+                        <img data-src="${publicUrlData.publicUrl}" alt="Gallery thumbnail" class="lazy w-full h-48 object-contain transition-transform duration-300 cursor-pointer">
                     `;
                     imageElement.querySelector('img').addEventListener('click', () => {
                         currentIndex = index;
@@ -447,6 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
             function showImageAtIndex(index) {
                 lightboxImage.src = imageUrls[index];
                 lightboxModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             }
 
             function showNextImage() {
@@ -465,6 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const closeLightbox = () => {
                 lightboxModal.classList.add('hidden');
                 lightboxImage.src = "";
+                document.body.style.overflow = 'auto';
             };
             
             lightboxCloseBtn.addEventListener('click', closeLightbox);
@@ -485,13 +771,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+
+            // Initialize lazy loading for gallery images
+            setupLazyLoading();
     
         } catch (error) {
             console.error("Error fetching gallery images:", error);
             placeholder.classList.remove('hidden');
             container.classList.add('hidden');
-            placeholder.innerHTML = `<h2 class="text-2xl font-bold text-red-500">Could not load images</h2>`;
+            placeholder.innerHTML = `<div class="error-message"><h2 class="text-2xl font-bold">Could not load images</h2></div>`;
         }
+    };
+
+    // --- CALENDAR ENHANCEMENTS ---
+    const enhanceCalendar = () => {
+        const today = new Date();
+        const currentDate = today.getDate();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        
+        // Highlight today's date
+        const calendarCells = document.querySelectorAll('.calendar-table td');
+        calendarCells.forEach(cell => {
+            const cellDate = parseInt(cell.textContent);
+            if (!isNaN(cellDate) && cellDate === currentDate) {
+                cell.classList.add('today');
+            }
+        });
     };
 
     // --- GEMINI API FEATURES ---
@@ -552,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let content;
             if (sender === 'user') {
                 content = `
-                    <div class="flex items-start gap-3 justify-end">
+                    <div class="flex items-start gap-3 justify-end fade-in">
                         <div class="bg-blue-600 text-white p-3 rounded-lg">
                             <p class="text-sm">${message}</p>
                         </div>
@@ -561,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             } else { // AI
                 content = `
-                    <div class="flex items-start gap-3">
+                    <div class="flex items-start gap-3 fade-in">
                         <span class="flex-shrink-0 h-8 w-8 rounded-full bg-[var(--accent-color)]/20 flex items-center justify-center text-[var(--accent-color)] font-bold">AI</span>
                         <div class="bg-[var(--card-bg)] p-3 rounded-lg border border-[var(--border-color)]">
                             <p class="text-sm">${message}</p>
@@ -584,12 +890,17 @@ document.addEventListener('DOMContentLoaded', () => {
             sendChatBtn.disabled = true;
 
             const systemPrompt = "You are a friendly and encouraging AI tutor for first-year engineering students at MIT Manipal. Your name is 'Circute'. Your goal is to help students understand complex topics by breaking them down into simple, easy-to-understand explanations. Avoid overly technical jargon. Use analogies and real-world examples where possible. Keep your responses concise and focused on the student's question. When asked for practice problems, provide one and then offer to provide the solution.";
-            const aiResponse = await callGeminiAPI(userQuery, systemPrompt);
-
-            addMessageToChat(aiResponse, 'ai');
-            chatLoader.classList.add('hidden');
-            sendChatBtn.disabled = false;
-            chatInput.focus();
+            
+            try {
+                const aiResponse = await callGeminiAPI(userQuery, systemPrompt);
+                addMessageToChat(aiResponse, 'ai');
+            } catch (error) {
+                addMessageToChat("Sorry, I'm having trouble responding right now. Please try again later.", 'ai');
+            } finally {
+                chatLoader.classList.add('hidden');
+                sendChatBtn.disabled = false;
+                chatInput.focus();
+            }
         };
 
         sendChatBtn.addEventListener('click', handleSendMessage);
@@ -636,6 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
             copyConfirm.classList.add('hidden');
             emailModal.classList.remove('hidden');
             emailModal.classList.add('active');
+            modalEmailFrom.focus();
         };
 
         const closeLightbox = () => {
@@ -683,11 +995,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const fullPrompt = `Recipient: ${recipientName}. Subject: "${subject}". Core message/request from student: "${prompt}". My name is ${fromName} and my registration number is ${regNo}.`;
             const systemPrompt = `You are an AI assistant helping a first-year engineering student ('${fromName}') draft a professional and respectful email to their professor. Given the recipient's name, the subject, and the core message, write a complete email body. Start with a polite salutation (e.g., 'Dear Prof. [Name],'), write the body based on the student's prompt, and end with a professional closing (e.g., 'Sincerely,', 'Best regards,'). The closing should be followed by the student's name on one line, and their registration number on the next line. The tone should be formal yet courteous. For example, the closing should look like:\n\nBest regards,\n${fromName}\nReg. No.: ${regNo}`;
 
-            const aiResponse = await callGeminiAPI(fullPrompt, systemPrompt);
-
-            modalEmailBody.value = aiResponse;
-            modalEmailLoader.classList.add('hidden');
-            modalGenerateEmailBtn.disabled = false;
+            try {
+                const aiResponse = await callGeminiAPI(fullPrompt, systemPrompt);
+                modalEmailBody.value = aiResponse;
+            } catch (error) {
+                modalEmailBody.value = "Sorry, there was an error generating the email. Please try again.";
+            } finally {
+                modalEmailLoader.classList.add('hidden');
+                modalGenerateEmailBtn.disabled = false;
+            }
         });
         
         copyEmailBtn.addEventListener('click', () => {
@@ -717,10 +1033,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Initial Renders based on page ---
-    renderDeadlineCards();
-    renderFacultyCards();
-    renderRestaurantCards();
-    renderAnnouncements();
-    renderGalleryImages();
+    // --- INITIALIZE ALL FEATURES ---
+    const initializeApp = () => {
+        setupAuthUI(); // <-- This now has the new logic
+        renderDeadlineCards();
+        renderFacultyCards();
+        renderRestaurantCards();
+        renderAnnouncements();
+        renderGalleryImages();
+        enhanceCalendar();
+        setupSearch();
+        setupLazyLoading();
+    };
+
+    // Start the application
+    initializeApp();
 });
+
