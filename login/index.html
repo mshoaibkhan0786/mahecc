@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MIT Manipal CSE Section CC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236d28d9'/%3E%3Cpath fill='white' d='M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z'/%3E%3C/svg%3E">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .form-transition {
+            transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
+        }
+        .form-fade-out {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+    <div id="app" class="flex-grow">
+        <!-- Header & Navigation -->
+        <header class="bg-[var(--nav-bg)] shadow-md w-full top-0 z-50 transition-colors duration-300">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 transition-transform duration-300 ease-in-out hover:-translate-y-0.5 cursor-pointer" onclick="window.location.href='/';">
+                             <svg class="h-8 w-8" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                 <rect width="100" height="100" rx="20" fill="var(--accent-color)"/>
+                                 <path fill="white" d="M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z"/>
+                               </svg>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                         <button class="theme-switcher-btn bg-[var(--bg-color)] p-2 rounded-full text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--nav-bg)] focus:ring-[var(--accent-color)]">
+                             <svg class="theme-icon-sun h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                             <svg class="theme-icon-moon h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        </button>
+                        <button id="header-auth-btn" class="bg-[var(--accent-color)] hover:opacity-90 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 duration-300 text-sm">
+                            Sign Up
+                        </button>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="w-full max-w-md space-y-8">
+                <div>
+                    <h2 id="form-title" class="mt-6 text-3xl font-bold tracking-tight text-[var(--header-text)]">
+                        Sign in to your account
+                    </h2>
+                </div>
+                
+                <div id="auth-message" class="hidden mb-4 p-4 text-sm rounded-lg text-center" role="alert"></div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="form-transition bg-[var(--card-bg)] shadow-xl rounded-2xl p-8 space-y-6 border border-[var(--border-color)]">
+                    <div class="rounded-md -space-y-px">
+                        <div>
+                            <label for="login-email" class="sr-only">Email address</label>
+                            <input id="login-email" name="email" type="email" autocomplete="email" required
+                                class="appearance-none rounded-none relative block w-full px-3 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-t-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
+                                placeholder="Email address">
+                        </div>
+                        <div class="relative">
+                            <label for="login-password" class="sr-only">Password</label>
+                            <input id="login-password" name="password" type="password" autocomplete="current-password"
+                                required
+                                class="appearance-none rounded-none relative block w-full px-3 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-b-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
+                                placeholder="Password">
+                            <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 z-20">
+                                <svg class="h-6 w-6 text-gray-400 eye-slashed" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m0 0l-2.175 2.175M3 3l18 18" />
+                                </svg>
+                                <svg class="h-6 w-6 text-gray-400 eye-open hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.522 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--accent-color)] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--accent-color)] transition-transform transform hover:scale-105 duration-300">
+                            Sign in
+                        </button>
+                    </div>
+
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-[var(--border-color)]"></div>
+                        <span class="flex-shrink mx-4 text-xs text-gray-400">OR</span>
+                        <div class="flex-grow border-t border-[var(--border-color)]"></div>
+                    </div>
+                    <div>
+                        <button type="button" id="google-login-btn" class="w-full inline-flex justify-center py-2 px-4 border border-[var(--border-color)] rounded-md shadow-sm bg-[var(--bg-color)] text-sm font-medium text-[var(--text-color)] hover:bg-[var(--border-color)]/50"><svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Google</button>
+                    </div>
+
+                    <div class="text-sm text-center mt-4">
+                        <p class="text-[var(--text-color)]">
+                            Don't have an account? 
+                            <a href="#" id="switch-to-signup" class="font-medium text-[var(--accent-color)] hover:underline">
+                                Sign up
+                            </a>
+                        </p>
+                    </div>
+                </form>
+
+                <!-- Signup Form -->
+                <form id="signup-form" class="form-transition bg-[var(--card-bg)] shadow-xl rounded-2xl p-8 space-y-6 border border-[var(--border-color)] hidden form-fade-out">
+                    <div class="rounded-md -space-y-px">
+                        <div>
+                            <label for="signup-name" class="sr-only">Full Name</label>
+                            <input id="signup-name" name="name" type="text" autocomplete="name" required
+                                class="appearance-none rounded-none relative block w-full px-3 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-t-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
+                                placeholder="Full Name">
+                        </div>
+                        <div>
+                            <label for="signup-email" class="sr-only">Email address</label>
+                            <input id="signup-email" name="email" type="email" autocomplete="email" required
+                                class="appearance-none rounded-none relative block w-full px-3 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
+                                placeholder="Email address">
+                        </div>
+                        <div>
+                            <label for="signup-phone" class="sr-only">Phone Number</label>
+                            <input id="signup-phone" name="phone" type="tel" autocomplete="tel" required
+                                class="appearance-none rounded-none relative block w-full px-3 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
+                                placeholder="Phone Number">
+                        </div>
+                         <div class="relative">
+                            <label for="signup-password" class="sr-only">Password</label>
+                            <input id="signup-password" name="password" type="password" autocomplete="new-password" required
+                                class="appearance-none rounded-none relative block w-full px-3 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-b-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
+                                placeholder="Password">
+                            <button type="button" class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 z-20">
+                               <svg class="h-6 w-6 text-gray-400 eye-slashed" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m0 0l-2.175 2.175M3 3l18 18" />
+                                </svg>
+                                <svg class="h-6 w-6 text-gray-400 eye-open hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.522 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--accent-color)] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--accent-color)] transition-transform transform hover:scale-105 duration-300">
+                            Create account
+                        </button>
+                    </div>
+                     <div class="text-sm text-center mt-4">
+                        <p class="text-[var(--text-color)]">
+                            Already have an account? 
+                            <a href="#" id="switch-to-login" class="font-medium text-[var(--accent-color)] hover:underline">
+                                Sign in
+                            </a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const switchToSignupLink = document.getElementById('switch-to-signup');
+            const switchToLoginLink = document.getElementById('switch-to-login');
+            const formTitle = document.getElementById('form-title');
+            const headerAuthBtn = document.getElementById('header-auth-btn');
+            const allPasswordToggles = document.querySelectorAll('.password-toggle');
+            const DURATION = 300; 
+
+            const switchToSignup = (e) => {
+                if(e) e.preventDefault();
+                loginForm.classList.add('form-fade-out');
+                setTimeout(() => {
+                    loginForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
+                    setTimeout(() => signupForm.classList.remove('form-fade-out'), 20); 
+                    formTitle.textContent = 'Create your account';
+                    headerAuthBtn.textContent = 'Sign In';
+                }, DURATION);
+            };
+
+            const switchToLogin = (e) => {
+                 if(e) e.preventDefault();
+                signupForm.classList.add('form-fade-out');
+                setTimeout(() => {
+                    signupForm.classList.add('hidden');
+                    loginForm.classList.remove('hidden');
+                    setTimeout(() => loginForm.classList.remove('form-fade-out'), 20);
+                    formTitle.textContent = 'Sign in to your account';
+                    headerAuthBtn.textContent = 'Sign Up';
+                }, DURATION);
+            };
+            
+            headerAuthBtn.addEventListener('click', () => {
+                if(headerAuthBtn.textContent.includes('Sign Up')) {
+                    switchToSignup();
+                } else {
+                    switchToLogin();
+                }
+            });
+
+            switchToSignupLink.addEventListener('click', switchToSignup);
+            switchToLoginLink.addEventListener('click', switchToLogin);
+
+            allPasswordToggles.forEach(button => {
+                button.addEventListener('click', () => {
+                    const passwordInput = button.closest('.relative').querySelector('input');
+                    const eyeOpen = button.querySelector('.eye-open');
+                    const eyeSlashed = button.querySelector('.eye-slashed');
+
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        eyeOpen.classList.remove('hidden');
+                        eyeSlashed.classList.add('hidden');
+                    } else {
+                        passwordInput.type = 'password';
+                        eyeSlashed.classList.remove('hidden');
+                        eyeOpen.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="auth.js"></script>
+</body>
+</html>
+
