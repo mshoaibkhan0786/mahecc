@@ -1199,8 +1199,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- DAILY QUOTE WIDGET ---
+    const renderDailyQuote = () => {
+        const quoteText = document.getElementById('quote-text');
+        const quoteAuthor = document.getElementById('quote-author');
+        if (!quoteText || !quoteAuthor) return;
+
+        const quotes = [
+            { text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "— Martin Fowler" },
+            { text: "First, solve the problem. Then, write the code.", author: "— John Johnson" },
+            { text: "Experience is the name everyone gives to their mistakes.", author: "— Oscar Wilde" },
+            { text: "Knowledge is power.", author: "— Francis Bacon" },
+            { text: "Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday's code.", author: "— Dan Salomon" },
+            { text: "It's not a bug. It's an undocumented feature!", author: "— Anonymous" },
+            { text: "The only way to do great work is to love what you do.", author: "— Steve Jobs" },
+            { text: "Before software can be reusable it first has to be usable.", author: "— Ralph Johnson" },
+            { text: "Optimism is an occupational hazard of programming: feedback is the treatment.", author: "— Kent Beck" }
+        ];
+
+        // Pick one based on the current day to change daily, or randomly on refresh
+        // Let's go with random on refresh to make it dynamic
+        const randomIndex = Math.floor(Math.random() * quotes.length);
+        const selectedQuote = quotes[randomIndex];
+
+        quoteText.textContent = `"${selectedQuote.text}"`;
+        quoteAuthor.textContent = selectedQuote.author;
+    };
+
     // --- INITIALIZE ALL FEATURES ---
     const initializeApp = () => {
+        renderDailyQuote();
         renderDeadlineCards();
         renderFacultyCards();
         renderRestaurantCards();
