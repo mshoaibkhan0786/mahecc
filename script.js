@@ -593,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Logic to move Quick Actions to the top if there are no assignments or quizzes
-            // and move the main content (quizzes/assignments) below Daily Insight
+            // and move the main content (quizzes/assignments) below Daily Insight on mobile only
             const quickLinksContainer = document.getElementById('quick-links');
             const mainContentContainer = assignmentsContainer.closest('.lg\\:col-span-2');
 
@@ -602,12 +602,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (sortedAssignments.length === 0 && sortedQuizzes.length === 0) {
                     if (parentCol && parentCol.parentElement && parentCol.classList.contains('lg:col-span-3')) {
                         const gridParent = parentCol.parentElement;
-                        // Move quick actions to the very top
+                        // Move quick actions to the very top (still holds visually since it's order 0 by default)
                         gridParent.prepend(parentCol);
 
-                        // Move the empty quizzes/assignments section to the very bottom
+                        // Push empty main section down strictly on mobile via specific classes
                         if (mainContentContainer) {
-                            gridParent.appendChild(mainContentContainer);
+                            mainContentContainer.classList.add('order-last', 'lg:order-none');
                         }
                     }
                 }
@@ -1267,6 +1267,163 @@ document.addEventListener('DOMContentLoaded', () => {
         quoteAuthor.textContent = selectedQuote.author;
     };
 
+    // --- TODO APP ---
+    const initTodoApp = async () => {
+        const todoContainer = document.getElementById('todo-planner-container');
+        const loginPrompt = document.getElementById('todo-login-prompt');
+        if (!todoContainer && !loginPrompt) return;
+
+        // Check auth status
+        let currentUser = null;
+        try {
+            if (supabaseClient) {
+                const { data } = await supabaseClient.auth.getUser();
+                currentUser = data?.user;
+            }
+        } catch (e) {
+            console.error("Auth check failed:", e);
+        }
+
+        if (todoContainer && loginPrompt) {
+            if (!currentUser) {
+                loginPrompt.classList.remove('hidden');
+                todoContainer.classList.add('hidden');
+                return;
+            } else {
+                loginPrompt.classList.add('hidden');
+                todoContainer.classList.remove('hidden');
+            }
+        }
+
+        if (!todoContainer) return;
+
+        // Logic for to-do list
+        const todoInput = document.getElementById('new-todo-input');
+        const todoDate = document.getElementById('new-todo-date');
+        const addTodoBtn = document.getElementById('add-todo-btn');
+        const todoList = document.getElementById('todo-list');
+        const emptyState = document.getElementById('todo-empty-state');
+
+        let filterState = 'all'; // all, active, completed
+        let todos = JSON.parse(localStorage.getItem(`cc_todos_${currentUser.id}`)) || [];
+
+        const saveTodos = () => {
+            localStorage.setItem(`cc_todos_${currentUser.id}`, JSON.stringify(todos));
+        };
+
+        const renderTodos = () => {
+            // clear old visible nodes
+            const oldNodes = todoList.querySelectorAll('.todo-item');
+            oldNodes.forEach(node => node.remove());
+
+            const filteredTodos = todos.filter(t => {
+                if (filterState === 'active') return !t.completed;
+                if (filterState === 'completed') return t.completed;
+                return true;
+            });
+
+            if (filteredTodos.length === 0) {
+                emptyState.style.display = 'flex';
+            } else {
+                emptyState.style.display = 'none';
+                filteredTodos.forEach(todo => {
+                    const el = document.createElement('div');
+                    el.className = `todo-item flex items-center justify-between p-4 bg-[var(--bg-color)] border border-[var(--border-color)] rounded-xl shadow-sm transition-all duration-300 ${todo.completed ? 'opacity-70' : ''}`;
+                    el.innerHTML = `
+                        <div class="flex items-center gap-4 min-w-0">
+                            <button class="toggle-todo text-2xl flex-shrink-0 focus-outline focus:ring-2 focus:ring-[var(--accent-color)] rounded-full outline-none" data-id="${todo.id}">
+                                ${todo.completed
+                            ? '<svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>'
+                            : '<div class="w-6 h-6 rounded-full border-2 border-[var(--border-color)] hover:border-[var(--accent-color)] transition-colors"></div>'}
+                            </button>
+                            <div class="min-w-0">
+                                <p class="font-medium text-[var(--text-color)] truncate ${todo.completed ? 'line-through opacity-70' : ''}">${todo.text}</p>
+                                ${todo.date ? `<p class="text-xs text-[var(--accent-color)] mt-1 font-semibold">${new Date(todo.date).toLocaleDateString()}</p>` : ''}
+                            </div>
+                        </div>
+                        <button class="delete-todo p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus-outline" data-id="${todo.id}">
+                            <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    `;
+                    todoList.appendChild(el);
+                });
+            }
+        };
+
+        if (addTodoBtn && todoInput) {
+            addTodoBtn.addEventListener('click', () => {
+                const text = todoInput.value.trim();
+                const date = todoDate ? todoDate.value : '';
+                if (!text) return;
+                todos.push({
+                    id: Date.now().toString(),
+                    text,
+                    date,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                });
+                todoInput.value = '';
+                if (todoDate) todoDate.value = '';
+                saveTodos();
+                renderTodos();
+            });
+
+            todoInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTodoBtn.click();
+            });
+        }
+
+        if (todoList) {
+            todoList.addEventListener('click', (e) => {
+                const toggleBtn = e.target.closest('.toggle-todo');
+                const deleteBtn = e.target.closest('.delete-todo');
+
+                if (toggleBtn) {
+                    const id = toggleBtn.dataset.id;
+                    const todo = todos.find(t => t.id === id);
+                    if (todo) {
+                        todo.completed = !todo.completed;
+                        saveTodos();
+                        renderTodos();
+                    }
+                }
+
+                if (deleteBtn) {
+                    const id = deleteBtn.dataset.id;
+                    todos = todos.filter(t => t.id !== id);
+                    saveTodos();
+                    renderTodos();
+                }
+            });
+        }
+
+        const filters = {
+            'filter-all': 'all',
+            'filter-active': 'active',
+            'filter-completed': 'completed'
+        };
+
+        Object.keys(filters).forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    // Update UI classes
+                    Object.keys(filters).forEach(fid => {
+                        const fbtn = document.getElementById(fid);
+                        if (fbtn) fbtn.className = "filter-btn text-sm px-3 py-1.5 bg-[var(--bg-color)] text-[var(--text-color)] hover:bg-[var(--border-color)] border border-transparent hover:border-[var(--border-color)] rounded-lg font-medium transition-colors focus-outline";
+                    });
+                    btn.className = "filter-btn active-filter text-sm px-3 py-1.5 bg-[var(--accent-color)] text-white rounded-lg font-medium transition-colors focus-outline";
+                    filterState = filters[id];
+                    renderTodos();
+                });
+            }
+        });
+
+        renderTodos();
+    };
+
     // --- INITIALIZE ALL FEATURES ---
     const initializeApp = () => {
         renderDailyQuote();
@@ -1278,6 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         enhanceCalendar();
         setupSearch();
         setupLazyLoading();
+        initTodoApp();
     };
 
     // Start the application
