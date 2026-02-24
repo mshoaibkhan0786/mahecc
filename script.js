@@ -69,10 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const avatarUrl = user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random&color=fff&size=128&bold=true`;
 
-            avatarDisplays.forEach(el => {
+            avatarDisplays.forEach((el, index) => {
                 if (el) {
                     el.src = avatarUrl;
                     el.classList.remove('hidden');
+                    el.onerror = () => {
+                        // Fallback to showing initial if image fails
+                        el.classList.add('hidden');
+                        if (initialDisplays[index]) {
+                            initialDisplays[index].classList.remove('hidden');
+                            initialDisplays[index].textContent = fullName.charAt(0).toUpperCase();
+                        }
+                    };
                 }
             });
             initialDisplays.forEach(el => el && el.classList.add('hidden'));

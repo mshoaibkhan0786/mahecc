@@ -270,19 +270,20 @@
             switchToLoginLink.addEventListener('click', switchToLogin);
 
             allPasswordToggles.forEach(button => {
-                button.addEventListener('click', () => {
-                    const passwordInput = button.closest('.relative').querySelector('input');
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const passwordInput = button.parentElement.querySelector('input');
                     const eyeOpen = button.querySelector('.eye-open');
                     const eyeSlashed = button.querySelector('.eye-slashed');
 
-                    if (passwordInput.type === 'password') {
+                    if (passwordInput && passwordInput.type === 'password') {
                         passwordInput.type = 'text';
-                        eyeOpen.classList.remove('hidden');
-                        eyeSlashed.classList.add('hidden');
-                    } else {
+                        if (eyeOpen) eyeOpen.classList.remove('hidden');
+                        if (eyeSlashed) eyeSlashed.classList.add('hidden');
+                    } else if (passwordInput) {
                         passwordInput.type = 'password';
-                        eyeSlashed.classList.remove('hidden');
-                        eyeOpen.classList.add('hidden');
+                        if (eyeSlashed) eyeSlashed.classList.remove('hidden');
+                        if (eyeOpen) eyeOpen.classList.add('hidden');
                     }
                 });
             });

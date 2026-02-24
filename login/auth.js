@@ -28,26 +28,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- SIGN UP HANDLER ---
-    if(signupForm) {
+    if (signupForm) {
         signupForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            
+
             const name = document.getElementById('signup-name').value;
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
             const phone = document.getElementById('signup-phone').value;
-    
+
             const { data, error } = await _supabase.auth.signUp({
                 email: email,
                 password: password,
                 options: {
+                    emailRedirectTo: new URL('../signup-success.html', window.location.href).href,
                     data: {
                         full_name: name,
-                        phone: phone, 
+                        phone: phone,
                     }
                 }
             });
-    
+
             if (error) {
                 if (error.message.includes("User already registered")) {
                     showMessage("This email is already in use. Please try logging in.", true);
@@ -55,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showMessage(`Error: ${error.message}`, true);
                 }
             } else if (data.user) {
-                 if (data.user.identities && data.user.identities.length === 0 && data.user.created_at !== data.user.updated_at) {
+                if (data.user.identities && data.user.identities.length === 0 && data.user.created_at !== data.user.updated_at) {
                     showMessage("This email is already in use with a social provider (like Google). Please sign in that way.", true);
                 } else {
                     showMessage('Sign up successful! Please check your email to verify your account.');
@@ -66,18 +67,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- LOGIN HANDLER ---
-    if(loginForm) {
+    if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            
+
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-    
+
             const { data, error } = await _supabase.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
-    
+
             if (error) {
                 showMessage(`Error: ${error.message}`, true);
             } else if (data.user) {
@@ -91,12 +92,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- GOOGLE OAUTH HANDLER ---
-    if(googleLoginBtn) {
+    if (googleLoginBtn) {
         googleLoginBtn.addEventListener('click', async () => {
             const { error } = await _supabase.auth.signInWithOAuth({
                 provider: 'google',
             });
-    
+
             if (error) {
                 showMessage(`Error: ${error.message}`, true);
             }
