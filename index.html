@@ -292,6 +292,62 @@
                 </header>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
+                    <!-- Quick Actions -->
+                    <div class="lg:col-span-3 mb-4">
+                        <section id="quick-links">
+                            <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Quick Actions
+                            </h2>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <a href="/circute/"
+                                    class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
+                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                    <span class="font-bold text-sm tracking-wide">Circute AI</span>
+                                </a>
+                                <a href="/studymaterial/"
+                                    class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
+                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                                        </path>
+                                    </svg>
+                                    <span class="font-bold text-sm tracking-wide">Notes</span>
+                                </a>
+                                <a href="/timetable/"
+                                    class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
+                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                    <span class="font-bold text-sm tracking-wide">Timetable</span>
+                                </a>
+                                <a href="/gallery/"
+                                    class="bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
+                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                    <span class="font-bold text-sm tracking-wide">Gallery</span>
+                                </a>
+                            </div>
+                        </section>
+                    </div>
+
                     <!-- Main Content -->
                     <div class="lg:col-span-2">
                         <div class="space-y-8">
@@ -341,62 +397,6 @@
                         </section>
                     </div>
 
-                    <!-- Quick Actions -->
-                    <div class="lg:col-span-2 h-full">
-                        <section id="quick-links" class="h-full flex flex-col">
-                            <h2 class="text-2xl font-semibold mb-4 text-[var(--header-text)] flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-[var(--accent-color)]"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                Quick Actions
-                            </h2>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-grow">
-                                <a href="/circute/"
-                                    class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
-                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                    <span class="font-bold text-sm tracking-wide">Circute AI</span>
-                                </a>
-                                <a href="/studymaterial/"
-                                    class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
-                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
-                                        </path>
-                                    </svg>
-                                    <span class="font-bold text-sm tracking-wide">Notes</span>
-                                </a>
-                                <a href="/timetable/"
-                                    class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
-                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                    <span class="font-bold text-sm tracking-wide">Timetable</span>
-                                </a>
-                                <a href="/gallery/"
-                                    class="bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-4 text-white shadow-lg transform transition duration-300 hover:scale-105 hover:-translate-y-1 flex flex-col items-center justify-center text-center">
-                                    <svg class="h-8 w-8 mb-2 opacity-90 drop-shadow-sm" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                    <span class="font-bold text-sm tracking-wide">Gallery</span>
-                                </a>
-                            </div>
-                        </section>
-                    </div>
-
                     <!-- Daily Motivation -->
                     <div class="lg:col-span-1 h-full">
                         <section id="daily-motivation" class="h-full flex flex-col">
@@ -410,7 +410,7 @@
                                 Daily Insight
                             </h2>
                             <div
-                                class="bg-[var(--card-bg)] rounded-xl p-6 shadow-md border border-[var(--border-color)] flex-grow flex flex-col justify-center relative overflow-hidden group">
+                                class="bg-[var(--card-bg)] rounded-xl p-6 shadow-md border border-[var(--border-color)] flex-grow flex flex-col justify-center relative overflow-hidden group transform transition duration-300 hover:scale-[1.02] hover:-translate-y-1 cursor-default hover:shadow-lg">
                                 <div
                                     class="absolute top-0 right-0 w-32 h-32 bg-[var(--accent-color)] opacity-5 rounded-full blur-3xl transform translate-x-8 -translate-y-8 group-hover:opacity-10 transition-opacity duration-500">
                                 </div>

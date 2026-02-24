@@ -439,6 +439,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Handle faculty page redirect without triggering global click handlers
+    const facultyLink = document.querySelector('a[href="/faculty/"]');
+    if (facultyLink) {
+        facultyLink.addEventListener('click', () => {
+            if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+                if (menuCloseIcon) menuCloseIcon.classList.add('hidden');
+                if (menuOpenIcon) menuOpenIcon.classList.remove('hidden');
+            }
+        });
+    }
+
     setActiveLink();
     setupMobileMenu();
 
@@ -578,6 +590,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else {
                 quizzesContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48 fade-in"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Quizzes</h2></div>`;
+            }
+
+            // Logic to move Quick Actions to the top if there are no assignments or quizzes
+            const quickLinksContainer = document.getElementById('quick-links');
+            if (quickLinksContainer) {
+                const parentCol = quickLinksContainer.parentElement;
+                if (sortedAssignments.length === 0 && sortedQuizzes.length === 0) {
+                    // Prepend it so it sits above the main content on mobile layout when nothing is taking up primary visual space
+                    if (parentCol && parentCol.parentElement && parentCol.classList.contains('lg:col-span-3')) {
+                        const gridParent = parentCol.parentElement;
+                        // It's already the primary visual on desktop if it spans all 3, but let's make sure its parent row visually responds
+                        gridParent.prepend(parentCol);
+                    }
+                }
             }
 
         } catch (error) {
