@@ -43,11 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 options: {
                     data: {
                         full_name: name,
-                        phone: phone 
-                    },
-                    // --- THIS IS THE NEW LINE ---
-                    redirectTo: `${window.location.origin}/signup-success.html`
-                    // --------------------------
+                        phone: phone, 
+                    }
                 }
             });
     
@@ -106,7 +103,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NO SESSION CHECK HERE ---
-    // (This was intentionally removed to fix the redirect loop on this page)
+
+    // --- SESSION CHECK ---
+    (async () => {
+        try {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                window.location.href = "/";
+            }
+        } catch (e) {
+            console.error("Error checking session:", e);
+        }
+    })();
 });
 

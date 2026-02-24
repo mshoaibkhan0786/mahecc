@@ -1,0 +1,5 @@
+Uncaught Error: DOMException {}
+DOM ERROR: Global error: DOMException {}
+SecurityError: localStorage is not available for opaque origins
+Before click: dropdown hidden class = true
+After click: dropdown hidden class = false

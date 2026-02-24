@@ -1,14 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- SERVICE WORKER REGISTRATION (FIXED PATH) ---
+    // --- KILL SERVICE WORKER & CLEAR CACHES ---
     if ('serviceWorker' in navigator) {
-        // Use relative path to work on localhost and live server
-        navigator.serviceWorker.register('./sw.js')
-            .then((registration) => {
-                console.log('Service Worker registered with scope:', registration.scope);
-            })
-            .catch((error) => {
-                console.log('Service Worker registration failed:', error);
-            });
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            for (let registration of registrations) {
+                registration.unregister().then(() => {
+                    console.log('Service Worker unregistered successfully.');
+                });
+            }
+        });
+    }
+    if ('caches' in window) {
+        caches.keys().then((names) => {
+            for (let name of names) {
+                caches.delete(name);
+                console.log('Deleted cache:', name);
+            }
+        });
     }
 
     // --- GLOBAL ERROR HANDLING ---
@@ -29,121 +36,224 @@ document.addEventListener('DOMContentLoaded', () => {
     let supabaseClient;
     try {
         const SUPABASE_URL = 'https://syvpeftawfakdiebueji.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDAyMzI0NywiZXhwIjoyMDc1NTk5MjQ3fQ.QvsKLJ3Sz_NIxTpI3heYgpH28dx3lB-naDmLcmezm5k';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {
         console.error("Supabase not available or initialization failed:", e);
     }
 
-    // --- *** NEW UPDATED AUTH UI FUNCTION *** ---
-    const setupAuthUI = async () => {
-        // --- Get all UI elements ---
-        // Desktop
-        const loginBtnHeader = document.getElementById('login-btn-header');
-        const profileDropdownContainer = document.getElementById('profile-dropdown-container');
-        const profileBtn = document.getElementById('profile-btn');
-        const profileDropdown = document.getElementById('profile-dropdown');
-        const profileInitial = document.getElementById('profile-initial');
-        const profileName = document.getElementById('profile-name');
-        const profileEmail = document.getElementById('profile-email');
-        const profilePhone = document.getElementById('profile-phone');
-        const logoutBtnDesktop = document.getElementById('logout-btn-desktop');
+    // --- AUTHENTICATION & PROFILE LOGIC ---
+    let currentUser = null;
+    const isLoginPage = window.location.pathname.includes('login.html');
 
-        // Mobile
-        const loginBtnMobile = document.getElementById('login-btn-mobile');
-        const mobileProfileInfoBlock = document.getElementById('mobile-profile-info-block'); // Main info div
-        const mobileProfileInitial = document.getElementById('mobile-profile-initial');
-        const mobileProfileName = document.getElementById('mobile-profile-name');
-        const mobileProfileEmail = document.getElementById('mobile-profile-email');
-        const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+    const updateProfileUI = (user) => {
+        const nameDisplays = [document.getElementById('profile-name'), document.getElementById('mobile-profile-name')];
+        const emailDisplays = [document.getElementById('profile-email'), document.getElementById('mobile-profile-email')];
+        const initialDisplays = [document.getElementById('profile-initial'), document.getElementById('mobile-profile-initial')];
+        const regDisplays = [document.getElementById('profile-reg'), document.getElementById('mobile-profile-reg')];
+        const phoneDisplays = [document.getElementById('profile-phone-display'), document.getElementById('mobile-profile-phone-display')];
+        const avatarDisplays = [document.getElementById('profile-avatar'), document.getElementById('mobile-profile-avatar')];
 
-        // --- Check Supabase session ---
-        if (!supabaseClient) return; // Supabase failed to init
-        const { data: { session } } = await supabaseClient.auth.getSession();
+        const logoutBtns = [document.getElementById('logout-btn-desktop'), document.getElementById('logout-btn-mobile')];
+        const editBtns = [document.getElementById('edit-profile-btn'), document.getElementById('edit-mobile-profile-btn')];
 
-        if (session) {
-            // --- USER IS LOGGED IN ---
-            const user = session.user;
-            const metadata = user.user_metadata;
-            const userName = metadata.full_name || metadata.name || 'User';
-            const userEmail = user.email;
-            const userPhone = metadata.phone || '...';
-            const userInitial = userName ? userName.charAt(0).toUpperCase() : '?';
+        if (user) {
+            const fullName = user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'User');
+            const regNumber = user.user_metadata?.reg_number || 'Not provided';
+            const phoneStr = user.user_metadata?.phone || 'Not provided';
 
-            // 1. Toggle UI visibility (NEW LOGIC)
-            if (loginBtnHeader) {
-                loginBtnHeader.classList.add('hidden');
-                loginBtnHeader.classList.remove('md:block'); // Force hide
-            }
-            if (profileDropdownContainer) {
-                profileDropdownContainer.classList.remove('hidden'); // Show
-            }
-            if (loginBtnMobile) loginBtnMobile.classList.add('hidden');
-            if (mobileProfileInfoBlock) mobileProfileInfoBlock.classList.remove('hidden');
+            nameDisplays.forEach(el => el && (el.textContent = fullName));
+            emailDisplays.forEach(el => el && (el.textContent = user.email || 'No email'));
+            regDisplays.forEach(el => el && (el.textContent = `Reg: ${regNumber}`));
+            phoneDisplays.forEach(el => el && (el.textContent = `Phone: ${phoneStr}`));
 
-            // 2. Populate Desktop Profile
-            if (profileInitial) profileInitial.textContent = userInitial;
-            if (profileName) profileName.textContent = userName;
-            if (profileEmail) profileEmail.textContent = userEmail;
-            if (profilePhone) profilePhone.textContent = userPhone;
+            const avatarUrl = user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random&color=fff&size=128&bold=true`;
 
-            // 3. Populate Mobile Profile
-            if (mobileProfileInitial) mobileProfileInitial.textContent = userInitial;
-            if (mobileProfileName) mobileProfileName.textContent = userName;
-            if (mobileProfileEmail) mobileProfileEmail.textContent = userEmail;
+            avatarDisplays.forEach(el => {
+                if (el) {
+                    el.src = avatarUrl;
+                    el.classList.remove('hidden');
+                }
+            });
+            initialDisplays.forEach(el => el && el.classList.add('hidden'));
 
-            // 4. Add Logout Handlers
-            const handleLogout = async () => {
-                await supabaseClient.auth.signOut();
-                window.location.href = '/login/'; // Redirect to login page
-            };
-            if (logoutBtnDesktop) logoutBtnDesktop.addEventListener('click', handleLogout);
-            if (logoutBtnMobile) logoutBtnMobile.addEventListener('click', handleLogout);
-
-            // 5. Add Profile Dropdown Toggle
-            if (profileBtn && profileDropdown) {
-                profileBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent click from closing it immediately
-                    profileDropdown.classList.toggle('hidden');
-                });
-                // Close dropdown if clicking outside
-                document.addEventListener('click', (e) => {
-                    if (!profileDropdown.classList.contains('hidden') && !profileBtn.contains(e.target)) {
-                        profileDropdown.classList.add('hidden');
-                    }
-                });
-            }
-        
-        // (You can add your name/phone edit logic here too)
-
+            logoutBtns.forEach(el => {
+                if (el) { el.textContent = 'Sign out'; el.classList.add('text-red-600'); el.classList.remove('text-[var(--accent-color)]'); }
+            });
+            editBtns.forEach(el => {
+                if (el) el.style.display = 'flex'; // show edit buttons
+            });
         } else {
-            // --- USER IS LOGGED OUT ---
-            
-            // 1. Toggle UI visibility (NEW LOGIC)
-            if (loginBtnHeader) {
-                loginBtnHeader.classList.remove('hidden');
-                loginBtnHeader.classList.add('md:block'); // Force show on desktop
-            }
-            if (profileDropdownContainer) {
-                profileDropdownContainer.classList.add('hidden'); // Force hide
-            }
-            if (loginBtnMobile) loginBtnMobile.classList.remove('hidden');
-            if (mobileProfileInfoBlock) mobileProfileInfoBlock.classList.add('hidden');
+            nameDisplays.forEach(el => el && (el.textContent = 'Guest User'));
+            emailDisplays.forEach(el => el && (el.textContent = 'Not logged in'));
+            regDisplays.forEach(el => el && (el.textContent = 'Reg: Not set'));
+            phoneDisplays.forEach(el => el && (el.textContent = 'Phone: Not set'));
+
+            avatarDisplays.forEach(el => el && el.classList.add('hidden'));
+            initialDisplays.forEach(el => el && el.classList.remove('hidden'));
+            initialDisplays.forEach(el => el && (el.textContent = '?'));
+
+            logoutBtns.forEach(el => {
+                if (el) { el.textContent = 'Sign in'; el.classList.remove('text-red-600'); el.classList.add('text-[var(--accent-color)]'); }
+            });
+            editBtns.forEach(el => {
+                if (el) el.style.display = 'none'; // hide edit buttons
+            });
         }
     };
-    
+
+    if (supabaseClient) {
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            currentUser = session?.user || null;
+            if (!isLoginPage) {
+                updateProfileUI(currentUser);
+            }
+        });
+
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+            currentUser = session?.user || null;
+            if (!isLoginPage) {
+                updateProfileUI(currentUser);
+            }
+        });
+    }
+
+    const handleLogoutOrLogin = async () => {
+        if (!currentUser) {
+            window.location.href = '/login.html';
+            return;
+        }
+        if (supabaseClient) {
+            await supabaseClient.auth.signOut();
+            window.location.reload();
+        }
+    };
+
+    const logoutBtnDesktop = document.getElementById('logout-btn-desktop');
+    const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+
+    if (logoutBtnDesktop) logoutBtnDesktop.addEventListener('click', handleLogoutOrLogin);
+    if (logoutBtnMobile) logoutBtnMobile.addEventListener('click', handleLogoutOrLogin);
+
+    // --- PROFILE EDITING LOGIC ---
+    const setupProfileEditing = () => {
+        const editBtnDesktop = document.getElementById('edit-profile-btn');
+        const updateFormDesktop = document.getElementById('edit-profile-form');
+        const nameInputDesktop = document.getElementById('edit-name-input');
+        const regInputDesktop = document.getElementById('edit-reg-input');
+        const phoneInputDesktop = document.getElementById('edit-phone-input');
+        const saveBtnDesktop = document.getElementById('save-profile-btn');
+        const cancelBtnDesktop = document.getElementById('cancel-edit-btn');
+
+        const editBtnMobile = document.getElementById('edit-mobile-profile-btn');
+        const updateFormMobile = document.getElementById('mobile-edit-profile-form');
+        const nameInputMobile = document.getElementById('mobile-edit-name-input');
+        const regInputMobile = document.getElementById('mobile-edit-reg-input');
+        const phoneInputMobile = document.getElementById('mobile-edit-phone-input');
+        const saveBtnMobile = document.getElementById('mobile-save-profile-btn');
+        const cancelBtnMobile = document.getElementById('mobile-cancel-edit-btn');
+
+        const toggleForm = (form, show, user) => {
+            if (!form) return;
+            if (show) {
+                form.classList.remove('hidden');
+                const nameInput = form.id.includes('mobile') ? nameInputMobile : nameInputDesktop;
+                const regInput = form.id.includes('mobile') ? regInputMobile : regInputDesktop;
+                const phoneInput = form.id.includes('mobile') ? phoneInputMobile : phoneInputDesktop;
+                if (nameInput) nameInput.value = user?.user_metadata?.full_name || '';
+                if (regInput) regInput.value = user?.user_metadata?.reg_number || '';
+                if (phoneInput) phoneInput.value = user?.user_metadata?.phone || '';
+            } else {
+                form.classList.add('hidden');
+            }
+        };
+
+        const handleSave = async (isMobile) => {
+            if (!currentUser || !supabaseClient) return;
+            const nameInput = isMobile ? nameInputMobile : nameInputDesktop;
+            const regInput = isMobile ? regInputMobile : regInputDesktop;
+            const phoneInput = isMobile ? phoneInputMobile : phoneInputDesktop;
+            const saveBtn = isMobile ? saveBtnMobile : saveBtnDesktop;
+
+            if (!nameInput || !regInput || !phoneInput) return;
+
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+
+            try {
+                const { data, error } = await supabaseClient.auth.updateUser({
+                    data: { full_name: nameInput.value, reg_number: regInput.value, phone: phoneInput.value }
+                });
+                if (error) throw error;
+
+                currentUser = data.user;
+                updateProfileUI(currentUser);
+                toggleForm(isMobile ? updateFormMobile : updateFormDesktop, false);
+            } catch (error) {
+                console.error("Error updating profile:", error);
+                alert("Failed to update profile: " + error.message);
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        };
+
+        if (editBtnDesktop) editBtnDesktop.addEventListener('click', (e) => { e.stopPropagation(); toggleForm(updateFormDesktop, true, currentUser); });
+        if (cancelBtnDesktop) cancelBtnDesktop.addEventListener('click', (e) => { e.stopPropagation(); toggleForm(updateFormDesktop, false); });
+        if (saveBtnDesktop) saveBtnDesktop.addEventListener('click', (e) => { e.stopPropagation(); handleSave(false); });
+
+        if (editBtnMobile) editBtnMobile.addEventListener('click', (e) => { e.stopPropagation(); toggleForm(updateFormMobile, true, currentUser); });
+        if (cancelBtnMobile) cancelBtnMobile.addEventListener('click', (e) => { e.stopPropagation(); toggleForm(updateFormMobile, false); });
+        if (saveBtnMobile) saveBtnMobile.addEventListener('click', (e) => { e.stopPropagation(); handleSave(true); });
+
+        // Prevent form clicks from closing the dropdown
+        if (updateFormDesktop) updateFormDesktop.addEventListener('click', (e) => e.stopPropagation());
+    };
+    setupProfileEditing();
+
+    // Setup Profile Dropdown toggle
+    const profileBtn = document.getElementById('profile-btn');
+    const profileDropdown = document.getElementById('profile-dropdown');
+
+    if (profileBtn && profileDropdown) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+    }
+
     // --- DATA (Static) ---
-    const faculty = [
-        { name: 'Sandeep Sir', subject: 'EVS', contact: '+91 9164489836', cabin: 'AB2 Basement', email: 'sandeep.gs@manipal.edu' },
-        { name: 'Shobha Ma\'am', subject: 'Maths', contact: '+91 9591474101', cabin: 'N/A', email: 'shobha.me@manipal.edu' },
-        { name: 'Sowmya Ma\'am', subject: 'Chem', contact: '+91 9686781587', cabin: 'N/A', email: 'sowmya.achar@manipal.edu' },
-        { name: 'Anandh Sir', subject: 'FEE', contact: '+91 9787934850', cabin: 'AB1', email: 'anandh.n@manipal.edu' },
-        { name: 'Bhagyashree Ma\'am', subject: 'EMSB', contact: '+91 8277511547', cabin: 'AB2 Basement', email: 'bhagyalaxmi.kh@manipal.edu' },
-        { name: 'Sujithra Ma\'am', subject: 'PPS', contact: '+91 9047756324', cabin: 'AB5', email: 't.sujithra@manipal.edu' },
-        { name: 'Aruna Prabhu', subject: 'CAEG', contact: '+91 9743593045', cabin: 'Cabin6, Chamber 2A, AB1', email: 'aruna.prabhu@manipal.edu' },
-        { name: 'Pavan Sir', subject: 'CAEG', contact: '+91 9620819669', cabin: 'N/A', email: 'N/A' },
-        { name: 'Girish Sir', subject: 'CAEG', contact: '+91 8951811729', cabin: 'N/A', email: 'N/A' },
-    ];
+    const facultyData = {
+        sem1: [
+            { name: 'Sandeep Sir', subject: 'EVS', contact: '+91 9164489836', cabin: 'AB2 Basement', email: 'sandeep.gs@manipal.edu' },
+            { name: 'Shobha Ma\'am', subject: 'Maths', contact: '+91 9591474101', cabin: 'N/A', email: 'shobha.me@manipal.edu' },
+            { name: 'Sowmya Ma\'am', subject: 'Chem', contact: '+91 9686781587', cabin: 'N/A', email: 'sowmya.achar@manipal.edu' },
+            { name: 'Anandh Sir', subject: 'FEE', contact: '+91 9787934850', cabin: 'AB1', email: 'anandh.n@manipal.edu' },
+            { name: 'Bhagyashree Ma\'am', subject: 'EMSB', contact: '+91 8277511547', cabin: 'AB2 Basement', email: 'bhagyalaxmi.kh@manipal.edu' },
+            { name: 'Sujithra Ma\'am', subject: 'PPS', contact: '+91 9047756324', cabin: 'AB5', email: 't.sujithra@manipal.edu' },
+            { name: 'Aruna Prabhu', subject: 'CAEG', contact: '+91 9743593045', cabin: 'Cabin6, Chamber 2A, AB1', email: 'aruna.prabhu@manipal.edu' },
+            { name: 'Pavan Sir', subject: 'CAEG', contact: '+91 9620819669', cabin: 'N/A', email: 'N/A' },
+            { name: 'Girish Sir', subject: 'CAEG', contact: '+91 8951811729', cabin: 'N/A', email: 'N/A' },
+        ],
+        sem2: [
+            { name: 'Cenitta D', subject: 'IOOP (Java)', contact: '+91 9738891473', cabin: 'N/A', email: 'cenitta.d@manipal.edu' },
+            { name: 'Raghavendra S', subject: 'DAV (Python)', contact: '+91 9591276777', cabin: 'AB5 Cabin 88', email: 'raghavendra.s@manipal.edu' },
+            { name: 'Indira KP', subject: 'Maths', contact: '+91 9901725397', cabin: 'AB2 First Floor', email: 'indira.kp@manipal.edu' },
+            { name: 'Bhagyesh', subject: 'Phy', contact: '+91 9481920572', cabin: 'N/A', email: 'bhaghyesh.mit@manipal.edu' },
+            { name: 'Gopalakrishna Pai', subject: 'FE', contact: '+91 9113662577', cabin: 'AB5 Ground Floor FC4', email: 'gopalkrishna.pai@manipal.edu' },
+            { name: 'Jitendra Katiyar', subject: 'FME', contact: '+91 8090113301', cabin: 'N/A', email: 'jitendra.katiyar@manipal.edu' },
+            { name: 'Hari MG', subject: 'English', contact: '+91 9746303781', cabin: 'AB2 Humanities Department FC1', email: 'hari.mg@manipal.edu' },
+            { name: 'H Girish', subject: 'Workshop', contact: '+91 8951811729', cabin: 'N/A', email: 'h.girish@manipal.edu' },
+        ]
+    };
+    let currentFacultyTab = 'sem2';
 
     const restaurants = [
         { name: 'Taco House', contact: '+91 7795815315' },
@@ -160,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { name: 'Nom Nom cafe', contact: '+91 7619422026' },
         { name: 'Ashraya', contact: '+91 6361201519' },
     ];
-    
+
     const today = new Date();
 
     // --- PERFORMANCE OPTIMIZATIONS ---
@@ -185,20 +295,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const cachedFetch = async (key, fetchFunction, ttl = 5 * 60 * 1000) => {
         const cached = localStorage.getItem(key);
         const now = Date.now();
-        
+
         if (cached) {
             const { data, timestamp } = JSON.parse(cached);
             if (now - timestamp < ttl) {
                 return data;
             }
         }
-        
+
         const freshData = await fetchFunction();
         localStorage.setItem(key, JSON.stringify({
             data: freshData,
             timestamp: now
         }));
-        
+
         return freshData;
     };
 
@@ -231,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
             allMoonIcons.forEach(icon => icon.classList.add('hidden'));
         }
     };
-    
+
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
 
@@ -243,12 +353,12 @@ document.addEventListener('DOMContentLoaded', () => {
             applyTheme(newTheme);
         });
     });
-    
+
     // --- ENHANCED MOBILE NAVIGATION ---
     const setupMobileMenu = () => {
         const mobileMenuBtn = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
-        
+
         if (mobileMenuBtn && mobileMenu) {
             // Close menu when clicking outside
             document.addEventListener('click', (e) => {
@@ -302,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     };
-    
+
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
@@ -360,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderDeadlineCards = async () => {
         const assignmentsContainer = document.querySelector('#assignments .space-y-4');
         const quizzesContainer = document.querySelector('#quizzes .space-y-4');
-        
+
         if (!assignmentsContainer || !quizzesContainer) return;
 
         if (!supabaseClient) {
@@ -386,18 +496,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (item.duedate) {
                 const daysLeft = getDaysRemaining(item.duedate);
-                if (daysLeft < 0) { 
-                    daysText = 'Overdue'; 
-                    daysColorClass = 'bg-red-500 text-white'; 
-                } else if (daysLeft === 0) { 
-                    daysText = 'Due Today'; 
-                    daysColorClass = 'bg-red-500 text-white'; 
-                } else if (daysLeft === 1) { 
-                    daysText = 'Due Tomorrow'; 
-                    daysColorClass = 'bg-orange-500 text-white'; 
-                } else { 
-                    daysText = `${daysLeft} days left`; 
-                    daysColorClass = 'bg-green-600 text-white'; 
+                if (daysLeft < 0) {
+                    daysText = 'Overdue';
+                    daysColorClass = 'bg-red-500 text-white';
+                } else if (daysLeft === 0) {
+                    daysText = 'Due Today';
+                    daysColorClass = 'bg-red-500 text-white';
+                } else if (daysLeft === 1) {
+                    daysText = 'Due Tomorrow';
+                    daysColorClass = 'bg-orange-500 text-white';
+                } else {
+                    daysText = `${daysLeft} days left`;
+                    daysColorClass = 'bg-green-600 text-white';
                 }
                 formattedDate = new Date(item.duedate).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             } else {
@@ -405,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 daysColorClass = 'bg-gray-400 text-white';
                 formattedDate = 'N/A';
             }
-            
+
             return `
                 <div class="bg-[var(--card-bg)] rounded-lg p-4 shadow-md border border-[var(--border-color)] hover-lift fade-in">
                     <div class="flex justify-between items-start">
@@ -447,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 assignmentsContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48 fade-in"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Assignments</h2></div>`;
             }
-            
+
             const sortedQuizzes = (quizzes || []).sort((a, b) => {
                 if (!a.duedate) return 1;
                 if (!b.duedate) return -1;
@@ -462,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 quizzesContainer.innerHTML = `<div class="bg-[var(--card-bg)] rounded-lg p-4 text-center border border-[var(--border-color)] flex items-center justify-center h-48 fade-in"><h2 class="text-2xl font-bold text-[var(--accent-color)] opacity-75">No Upcoming Quizzes</h2></div>`;
             }
 
-        } catch(error) {
+        } catch (error) {
             console.error("Error fetching deadline data:", error);
             const errorHtml = `<div class="error-message" role="alert"><p>Could not load data. Please check your connection.</p></div>`;
             assignmentsContainer.innerHTML = errorHtml;
@@ -470,33 +580,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderFacultyCards = () => {
-        const container = document.querySelector('#faculty-container');
-        if (!container) return; 
-
-        // Add search functionality if on faculty page
-        const searchHtml = `
-            <div class="mb-6">
-                <div class="relative max-w-md">
-                    <input 
-                        type="text" 
-                        id="search-input"
-                        placeholder="Search faculty..." 
-                        class="search-input w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--card-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] focus-outline"
-                    >
-                    <svg class="search-icon h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-            </div>
-        `;
-
-        if (window.location.pathname.includes('/faculty/')) {
-            container.insertAdjacentHTML('beforebegin', searchHtml);
-        }
-
+    const renderCardsOnly = (container) => {
         container.innerHTML = '';
-        faculty.forEach(f => {
+        const currentList = facultyData[currentFacultyTab] || [];
+
+        currentList.forEach(f => {
             const emailButtonHtml = f.email !== 'N/A' ? `
                 <div class="mt-4 pt-4 border-t border-[var(--border-color)]">
                     <button data-faculty-name="${f.name}" data-faculty-email="${f.email}" class="compose-email-btn w-full text-center bg-[var(--accent-color)]/10 text-[var(--accent-color)] font-semibold py-2 px-4 rounded-lg hover:bg-[var(--accent-color)] hover:text-white transition-colors duration-300 text-sm focus-outline">
@@ -506,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ` : '';
 
             container.innerHTML += `
-                <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)] flex flex-col hover-lift fade-in">
+                <div class="bg-[var(--card-bg)] rounded-lg p-5 shadow-md border border-[var(--border-color)] flex flex-col hover-lift fade-in faculty-card">
                     <h3 class="text-xl font-bold text-[var(--header-text)]">${f.name}</h3>
                     <p class="text-[var(--accent-color)] font-semibold">${f.subject}</p>
                     <div class="mt-4 space-y-2 text-sm flex-grow">
@@ -529,9 +617,78 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const renderFacultyCards = () => {
+        const container = document.querySelector('#faculty-container');
+        if (!container) return;
+
+        // Add search functionality and tabs if on faculty page
+        const searchHtml = `
+            <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="relative w-full md:max-w-md">
+                    <input 
+                        type="text" 
+                        id="search-input"
+                        placeholder="Search faculty..." 
+                        class="search-input w-full pl-10 pr-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--card-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] focus-outline shadow-sm"
+                    >
+                    <svg class="search-icon h-5 w-5 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                
+                <div class="flex bg-[var(--bg-color)] border border-[var(--border-color)] rounded-lg p-1 w-full md:w-auto shadow-sm">
+                    <button id="tab-sem1" class="flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 text-[var(--text-color)] focus-outline">Sem I</button>
+                    <button id="tab-sem2" class="flex-1 md:flex-none px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 bg-[var(--accent-color)] text-white shadow-sm focus-outline">Sem II</button>
+                </div>
+            </div>
+        `;
+
+        // Only insert if it hasn't been inserted already (to handle re-renders if any)
+        if (window.location.pathname.includes('/faculty/') && !document.getElementById('search-input')) {
+            container.insertAdjacentHTML('beforebegin', searchHtml);
+
+            const tab1 = document.getElementById('tab-sem1');
+            const tab2 = document.getElementById('tab-sem2');
+            const searchInput = document.getElementById('search-input');
+
+            const updateTabsUI = () => {
+                if (currentFacultyTab === 'sem1') {
+                    tab1.classList.add('bg-[var(--accent-color)]', 'text-white', 'shadow-sm');
+                    tab1.classList.remove('text-[var(--text-color)]');
+                    tab2.classList.remove('bg-[var(--accent-color)]', 'text-white', 'shadow-sm');
+                    tab2.classList.add('text-[var(--text-color)]');
+                } else {
+                    tab2.classList.add('bg-[var(--accent-color)]', 'text-white', 'shadow-sm');
+                    tab2.classList.remove('text-[var(--text-color)]');
+                    tab1.classList.remove('bg-[var(--accent-color)]', 'text-white', 'shadow-sm');
+                    tab1.classList.add('text-[var(--text-color)]');
+                }
+            };
+
+            tab1.addEventListener('click', () => {
+                currentFacultyTab = 'sem1';
+                updateTabsUI();
+                renderCardsOnly(container);
+                if (searchInput) searchInput.dispatchEvent(new Event('input')); // re-apply search
+            });
+
+            tab2.addEventListener('click', () => {
+                currentFacultyTab = 'sem2';
+                updateTabsUI();
+                renderCardsOnly(container);
+                if (searchInput) searchInput.dispatchEvent(new Event('input')); // re-apply search
+            });
+
+            // Initial UI update for tabs since we default to sem2
+            updateTabsUI();
+        }
+
+        renderCardsOnly(container);
+    };
+
     const renderRestaurantCards = () => {
         const container = document.querySelector('#restaurants-container');
-        if (!container) return; 
+        if (!container) return;
 
         // Add search functionality if on restaurants page
         const searchHtml = `
@@ -588,13 +745,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderAnnouncements = async () => {
         const container = document.querySelector('#notifications .space-y-3');
-        if (!container) return; 
+        if (!container) return;
 
         if (!supabaseClient) {
-             container.innerHTML = `<div class="error-message" role="alert"><p>Supabase client not initialized.</p></div>`;
+            container.innerHTML = `<div class="error-message" role="alert"><p>Supabase client not initialized.</p></div>`;
             return;
         };
-        
+
         container.innerHTML = `<div class="skeleton-loader rounded-lg h-20"></div>`;
 
         const handleUpdates = (data) => {
@@ -605,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
                 return;
             }
-            
+
             container.innerHTML = '';
             data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).forEach(ann => {
                 const postTime = timeAgo(ann.created_at);
@@ -626,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             });
         };
-        
+
         try {
             const { data, error } = await fetchWithRetry(() => supabaseClient.from('announcements').select('*'));
             if (error) throw error;
@@ -639,8 +796,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (supabaseClient) {
             supabaseClient.channel('custom-all-channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, async (_payload) => {
-                     const { data } = await supabaseClient.from('announcements').select('*');
-                     handleUpdates(data);
+                    const { data } = await supabaseClient.from('announcements').select('*');
+                    handleUpdates(data);
                 })
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'quizzes' }, (_payload) => {
                     renderDeadlineCards();
@@ -655,63 +812,66 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderGalleryImages = async () => {
         const placeholder = document.querySelector('#gallery-placeholder');
         const container = document.querySelector('#gallery-container');
-        
+
         const lightboxModal = document.getElementById('lightbox-modal');
         const lightboxImage = document.getElementById('lightbox-image');
         const lightboxCloseBtn = document.getElementById('lightbox-close');
         const lightboxPrevBtn = document.getElementById('lightbox-prev');
         const lightboxNextBtn = document.getElementById('lightbox-next');
-    
+
         if (!container || !placeholder || !lightboxModal) return;
-    
+
         if (!supabaseClient) {
             placeholder.innerHTML = `<div class="error-message"><h2 class="text-2xl font-bold">Error: Supabase Not Ready</h2></div>`;
             return;
         }
-    
+
+        // Hide "Coming Soon" placeholder and reveal container strictly BEFORE fetch
+        placeholder.classList.add('hidden');
+        container.classList.remove('hidden');
+
         // Show skeleton loading
         container.innerHTML = `
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                ${Array.from({length: 8}, () => `
-                    <div class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] animate-pulse">
-                        <div class="h-48 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full col-span-full">
+                ${Array.from({ length: 8 }, () => `
+                    <div class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] animate-pulse w-full">
+                        <div class="h-48 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
                     </div>
                 `).join('')}
             </div>
         `;
-    
-        const BUCKET_NAME = 'gallery-images'; 
-    
+
+        const BUCKET_NAME = 'gallery-images';
+
         try {
-            const { data: files, error } = await fetchWithRetry(() => 
-                supabaseClient.storage.from(BUCKET_NAME).list('', { 
-                    sortBy: { column: 'created_at', order: 'desc' } 
+            const { data: files, error } = await fetchWithRetry(() =>
+                supabaseClient.storage.from(BUCKET_NAME).list('', {
+                    sortBy: { column: 'created_at', order: 'desc' }
                 })
             );
-    
+
             if (error) throw error;
-            
-            const imageFiles = files.filter(file => {
+
+            const imageFiles = files?.filter(file => {
                 const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
                 return allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
             });
-    
+
             if (!imageFiles || imageFiles.length === 0) {
                 container.classList.add('hidden');
                 placeholder.classList.remove('hidden');
-                return; 
+                return;
             }
-    
-            placeholder.classList.add('hidden');
-            container.classList.remove('hidden');
-            container.innerHTML = ''; 
+
+            // Successfully fetched; clear skeleton array before injecting
+            container.innerHTML = '';
 
             const imageUrls = [];
             let currentIndex = 0;
 
             imageFiles.forEach((file, index) => {
                 const { data: publicUrlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(file.name);
-                
+
                 if (publicUrlData.publicUrl) {
                     imageUrls.push(publicUrlData.publicUrl);
 
@@ -752,7 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 lightboxImage.src = "";
                 document.body.style.overflow = 'auto';
             };
-            
+
             lightboxCloseBtn.addEventListener('click', closeLightbox);
             lightboxModal.addEventListener('click', (e) => {
                 if (e.target === lightboxModal) {
@@ -774,7 +934,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Initialize lazy loading for gallery images
             setupLazyLoading();
-    
+
         } catch (error) {
             console.error("Error fetching gallery images:", error);
             placeholder.classList.remove('hidden');
@@ -789,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentDate = today.getDate();
         const currentMonth = today.getMonth();
         const currentYear = today.getFullYear();
-        
+
         // Highlight today's date
         const calendarCells = document.querySelectorAll('.calendar-table td');
         calendarCells.forEach(cell => {
@@ -802,17 +962,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GEMINI API FEATURES ---
     const callGeminiAPI = async (userQuery, systemPrompt, retries = 3, delay = 1000) => {
-        const supabaseFunctionUrl = 'https://syvpeftawfakdiebueji.supabase.co/functions/v1/call-gemini';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
-        const payload = { userQuery, systemPrompt };
+        const API_KEY = 'AIzaSyAMOVgh4qSDaB7H1rIagnWtvj6cjJ6gPbI';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+
+        const payload = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [{ text: systemPrompt + "\n\nUser Question: " + userQuery }]
+                }
+            ]
+        };
 
         try {
-            const response = await fetch(supabaseFunctionUrl, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': supabaseAnonKey, 
-                    'Authorization': `Bearer ${supabaseAnonKey}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
@@ -823,28 +989,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     return callGeminiAPI(userQuery, systemPrompt, retries - 1, delay * 2);
                 }
                 const errorData = await response.json();
-                throw new Error(`API request failed with status ${response.status}: ${errorData.error || 'Unknown error'}`);
+                throw new Error(`API request failed with status ${response.status}: ${errorData.error?.message || 'Unknown error'}`);
             }
 
             const result = await response.json();
             const candidate = result.candidates?.[0];
             if (candidate && candidate.content?.parts?.[0]?.text) {
                 return candidate.content.parts[0].text;
-            } else if (result.error) {
-                 throw new Error(`Error from Supabase Function: ${result.error}`);
-            }
-            else {
-                if(result.error && result.error.message) {
-                    throw new Error(`Error from Gemini API: ${result.error.message}`);
-                }
-                throw new Error("Invalid response structure from API.");
+            } else {
+                throw new Error("Invalid response structure from Gemini API.");
             }
         } catch (error) {
             console.error("Gemini API call failed:", error);
             return `Sorry, an error occurred: ${error.message}`;
         }
     };
-    
+
     // --- AI Study Helper Logic ---
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
@@ -852,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatLoader = document.getElementById('chat-loader');
     const promptSuggestionBtns = document.querySelectorAll('.prompt-suggestion-btn');
 
-    if (chatInput) { 
+    if (chatInput) {
         const addMessageToChat = (message, sender) => {
             const messageDiv = document.createElement('div');
             let content;
@@ -890,7 +1050,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sendChatBtn.disabled = true;
 
             const systemPrompt = "You are a friendly and encouraging AI tutor for first-year engineering students at MIT Manipal. Your name is 'Circute'. Your goal is to help students understand complex topics by breaking them down into simple, easy-to-understand explanations. Avoid overly technical jargon. Use analogies and real-world examples where possible. Keep your responses concise and focused on the student's question. When asked for practice problems, provide one and then offer to provide the solution.";
-            
+
             try {
                 const aiResponse = await callGeminiAPI(userQuery, systemPrompt);
                 addMessageToChat(aiResponse, 'ai');
@@ -917,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-     // --- AI Email Modal Logic ---
+    // --- AI Email Modal Logic ---
     const emailModal = document.getElementById('email-modal');
     const closeModalBtn = document.getElementById('close-modal-btn');
     const modalEmailToDisplay = document.getElementById('modal-email-to-display');
@@ -932,13 +1092,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyEmailBtn = document.getElementById('copy-email-btn');
     const copyConfirm = document.getElementById('copy-confirm');
     const sendEmailBtn = document.getElementById('send-email-btn');
-    
-    if (emailModal) { 
+
+    if (emailModal) {
         const openEmailModal = (facultyName, facultyEmail) => {
             modalEmailToDisplay.textContent = `${facultyName} <${facultyEmail}>`;
             modalEmailToValue.value = facultyEmail;
-            modalEmailFrom.value = localStorage.getItem('userName') || '';
-            modalEmailRegNo.value = localStorage.getItem('userRegNo') || '';
+
+            // Prefer current logged in user from Supabase over raw local storage
+            const defaultName = currentUser?.user_metadata?.full_name || localStorage.getItem('userName') || '';
+            const defaultRegNo = currentUser?.user_metadata?.reg_number || localStorage.getItem('userRegNo') || '';
+
+            modalEmailFrom.value = defaultName;
+            modalEmailRegNo.value = defaultRegNo;
+
             modalEmailSubject.value = '';
             modalEmailPrompt.value = '';
             modalEmailBody.value = '';
@@ -965,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 openEmailModal(facultyName, facultyEmail);
             }
         });
-        
+
         closeModalBtn.addEventListener('click', closeLightbox);
         emailModal.addEventListener('click', (e) => {
             if (e.target === emailModal) {
@@ -1005,13 +1171,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalGenerateEmailBtn.disabled = false;
             }
         });
-        
+
         copyEmailBtn.addEventListener('click', () => {
-            if(modalEmailBody.value) {
+            if (modalEmailBody.value) {
                 navigator.clipboard.writeText(modalEmailBody.value).then(() => {
                     copyConfirm.classList.remove('hidden');
                     setTimeout(() => {
-                       copyConfirm.classList.add('hidden');
+                        copyConfirm.classList.add('hidden');
                     }, 2000);
                 });
             }
@@ -1035,7 +1201,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZE ALL FEATURES ---
     const initializeApp = () => {
-        setupAuthUI(); // <-- This now has the new logic
         renderDeadlineCards();
         renderFacultyCards();
         renderRestaurantCards();
@@ -1049,4 +1214,3 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start the application
     initializeApp();
 });
-
