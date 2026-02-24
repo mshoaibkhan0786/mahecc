@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,45 +9,74 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236d28d9'/%3E%3Cpath fill='white' d='M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z'/%3E%3C/svg%3E">
+    <link id="favicon" rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236d28d9'/%3E%3Cpath fill='white' d='M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body class="antialiased flex items-center justify-center min-h-screen p-4">
     <div class="max-w-md w-full">
         <div class="flex justify-center mb-6">
-            <svg class="h-12 w-12" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="20" fill="var(--accent-color)"/>
-                <path fill="white" d="M50 20 l25 15 v30 l-25 15 l-25 -15 v-30 z M50 38 l15 9 v18 l-15 9 l-15 -9 v-18 z"/>
-            </svg>
+            <img src="logo.png" alt="CC Logo"
+                class="h-16 w-16 object-contain rounded-xl shadow-lg transition-transform duration-300 ease-in-out hover:scale-105" />
         </div>
-        
-        <div class="bg-[var(--card-bg)] shadow-xl rounded-2xl p-8 space-y-6 border border-[var(--border-color)] text-center">
-            
-            <div class="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
-                <svg class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+
+        <div
+            class="bg-[var(--card-bg)] shadow-xl rounded-2xl p-8 space-y-6 border border-[var(--border-color)] text-center">
+
+            <div
+                class="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
+                <svg class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
             </div>
-            
-            <h2 class="text-2xl font-bold tracking-tight text-[var(--header-text)]">
-                Signup Successful!
+
+            <h2 id="success-header" class="text-2xl font-bold tracking-tight text-[var(--header-text)]">
+                Email Verified!
             </h2>
-            
-            <p class="text-[var(--text-color)]">
+
+            <p id="success-desc" class="text-[var(--text-color)]">
                 Thank you for verifying your email. You can now log in to your account.
             </p>
 
             <div>
-                <a href="/login/"
-                    class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--accent-color)] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--accent-color)] transition-transform transform hover:scale-105 duration-300">
+                <a id="action-btn" href="/login/"
+                    class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-[var(--accent-color)] hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--accent-color)] transition-transform transform hover:scale-105 duration-300 shadow-md">
                     Go to Login
                 </a>
             </div>
         </div>
-        
+
         <p class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
             MIT Manipal CSE Section CC • Built by Mohammad Shoaib Khan
         </p>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SUPABASE_URL = 'https://syvpeftawfakdiebueji.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dnBlZnRhd2Zha2RpZWJ1ZWppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMjMyNDcsImV4cCI6MjA3NTU5OTI0N30.RSR3fp-ooPgSxwCKmMb-Xt2pTrb2cO8w5VJg9bZxaiY';
+
+            // Supabase automatically parses tokens on initialization
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            const header = document.getElementById('success-header');
+            const desc = document.getElementById('success-desc');
+            const btn = document.getElementById('action-btn');
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+
+            if (session) {
+                // If they have a session, the token was valid!
+                header.textContent = "Email Verified!";
+                desc.textContent = "You are now logged in successfully and can access the dashboard.";
+                btn.textContent = "Go to Dashboard";
+                btn.href = "/";
+            }
+        });
+    </script>
 </body>
+
 </html>
