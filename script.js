@@ -593,15 +593,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Logic to move Quick Actions to the top if there are no assignments or quizzes
+            // and move the main content (quizzes/assignments) below Daily Insight
             const quickLinksContainer = document.getElementById('quick-links');
+            const mainContentContainer = assignmentsContainer.closest('.lg\\:col-span-2');
+
             if (quickLinksContainer) {
                 const parentCol = quickLinksContainer.parentElement;
                 if (sortedAssignments.length === 0 && sortedQuizzes.length === 0) {
-                    // Prepend it so it sits above the main content on mobile layout when nothing is taking up primary visual space
                     if (parentCol && parentCol.parentElement && parentCol.classList.contains('lg:col-span-3')) {
                         const gridParent = parentCol.parentElement;
-                        // It's already the primary visual on desktop if it spans all 3, but let's make sure its parent row visually responds
+                        // Move quick actions to the very top
                         gridParent.prepend(parentCol);
+
+                        // Move the empty quizzes/assignments section to the very bottom
+                        if (mainContentContainer) {
+                            gridParent.appendChild(mainContentContainer);
+                        }
                     }
                 }
             }
