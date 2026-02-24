@@ -272,7 +272,9 @@
             allPasswordToggles.forEach(button => {
                 button.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const passwordInput = button.parentElement.querySelector('input');
+                    // Grab the nearest input by looking at previous elements or searching within the parent container
+                    const container = button.closest('.relative');
+                    const passwordInput = container.querySelector('input');
                     const eyeOpen = button.querySelector('.eye-open');
                     const eyeSlashed = button.querySelector('.eye-slashed');
 

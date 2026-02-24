@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 email: email,
                 password: password,
                 options: {
-                    emailRedirectTo: new URL('../signup-success.html', window.location.href).href,
+                    emailRedirectTo: window.location.origin + '/signup-success.html',
                     data: {
                         full_name: name,
                         phone: phone,
