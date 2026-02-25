@@ -867,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hasMoreGallery = true;
             imageUrls.length = 0;
             container.innerHTML = '';
-            
+
             // Show skeletons
             container.innerHTML = `<div id="gallery-skeletons" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full col-span-full">${Array.from({ length: 8 }, () => `<div class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] animate-pulse w-full"><div class="h-48 md:h-64 bg-gray-300 dark:bg-gray-700 rounded-lg"></div></div>`).join('')}</div>`;
             placeholder.classList.add('hidden');
@@ -887,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (error) throw error;
-            
+
             const imageFiles = files?.filter(file => {
                 const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
                 return allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
@@ -913,7 +913,7 @@ document.addEventListener('DOMContentLoaded', () => {
             imageFiles.forEach((file) => {
                 const { data: publicUrlData } = supabaseClient.storage.from('gallery-images').getPublicUrl(file.name);
                 if (publicUrlData.publicUrl) {
-                    let uploaderName = "mshoaibkhan0988@gmail.com"; // Default for legacy images
+                    let uploaderName = "Mohammad Shoaib Khan (Admin)"; // Default for legacy images
                     const nameParts = file.name.split('___');
                     if (nameParts.length >= 3) {
                         uploaderName = decodeURIComponent(nameParts[1]); // the custom uploader
@@ -928,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity flex items-end">
                             <p class="text-xs md:text-sm text-white font-medium truncate w-full drop-shadow-md">By: ${uploaderName}</p>
                         </div>`;
-                    
+
                     imageElement.addEventListener('click', () => {
                         const lightboxImage = document.getElementById('lightbox-image');
                         const lightboxModal = document.getElementById('lightbox-modal');
@@ -937,16 +937,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         lightboxModal.classList.remove('hidden');
                         document.body.style.overflow = 'hidden';
                     });
-                    
+
                     container.appendChild(imageElement);
                 }
             });
 
             galleryOffset += GALLERY_LIMIT;
-            
+
             // Call generic lazy loader for new images
             if (typeof setupLazyLoading === 'function') {
-                setupLazyLoading(); 
+                setupLazyLoading();
             }
 
             if (hasMoreGallery) {
@@ -957,7 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         scrollSpinner.className = 'col-span-full py-4 flex justify-center text-[var(--accent-color)]';
                         scrollSpinner.innerHTML = `<svg class="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
                         container.appendChild(scrollSpinner);
-                        
+
                         loadGalleryBatch().then(() => {
                             if (scrollSpinner.parentNode) scrollSpinner.remove();
                         });
@@ -982,16 +982,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const lightboxPrevBtn = document.getElementById('lightbox-prev');
         const lightboxNextBtn = document.getElementById('lightbox-next');
         const lightboxImage = document.getElementById('lightbox-image');
-        
-        if(!lightboxModal || !lightboxCloseBtn) return;
+
+        if (!lightboxModal || !lightboxCloseBtn) return;
 
         const showNext = () => {
             currentLightboxIndex = (currentLightboxIndex + 1) % imageUrls.length;
-            if(imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
+            if (imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
         };
         const showPrev = () => {
             currentLightboxIndex = (currentLightboxIndex - 1 + imageUrls.length) % imageUrls.length;
-            if(imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
+            if (imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
         };
         const close = () => {
             lightboxModal.classList.add('hidden');
@@ -1003,22 +1003,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const closeClone = lightboxCloseBtn.cloneNode(true);
         lightboxCloseBtn.parentNode.replaceChild(closeClone, lightboxCloseBtn);
         closeClone.addEventListener('click', close);
-        
+
         const nextClone = lightboxNextBtn.cloneNode(true);
         lightboxNextBtn.parentNode.replaceChild(nextClone, lightboxNextBtn);
         nextClone.addEventListener('click', showNext);
-        
+
         const prevClone = lightboxPrevBtn.cloneNode(true);
         lightboxPrevBtn.parentNode.replaceChild(prevClone, lightboxPrevBtn);
         prevClone.addEventListener('click', showPrev);
 
-        lightboxModal.addEventListener('click', (e) => { if(e.target === lightboxModal) close(); });
-        
+        lightboxModal.addEventListener('click', (e) => { if (e.target === lightboxModal) close(); });
+
         document.addEventListener('keydown', (e) => {
-            if(!lightboxModal.classList.contains('hidden')) {
-                if(e.key === 'ArrowRight') showNext();
-                if(e.key === 'ArrowLeft') showPrev();
-                if(e.key === 'Escape') close();
+            if (!lightboxModal.classList.contains('hidden')) {
+                if (e.key === 'ArrowRight') showNext();
+                if (e.key === 'ArrowLeft') showPrev();
+                if (e.key === 'Escape') close();
             }
         });
     }
@@ -1034,9 +1034,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const uploadModal = document.getElementById('gallery-upload-modal');
         const uploadClose = document.getElementById('gallery-upload-close');
         const uploadForm = document.getElementById('gallery-upload-form');
-        
+
         if (!uploadBtn) return;
-        
+
         uploadBtn.addEventListener('click', async () => {
             if (!supabaseClient) return;
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -1048,43 +1048,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             uploadModal.classList.remove('hidden');
         });
-        
+
         uploadClose.addEventListener('click', () => {
             uploadModal.classList.add('hidden');
         });
-        
+
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const fileInput = document.getElementById('gallery-file-input');
             const anonymousCheck = document.getElementById('gallery-anonymous-check');
             const file = fileInput.files[0];
             if (!file) return;
-            
+
             const submitBtn = uploadForm.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Uploading...';
-            
+
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 let uploaderName = user?.user_metadata?.full_name || user?.email || 'Student';
-                if (anonymousCheck.checked) uploaderName = 'Anonymous';
-                
+                let displayUploader = uploaderName;
+                if (anonymousCheck.checked) displayUploader = 'Anonymous';
+
                 const safeOriginal = file.name.replace(/[^a-zA-Z0-9.\-]/g, '_');
-                const safeUploader = encodeURIComponent(uploaderName);
+                const safeDisplayUploader = encodeURIComponent(displayUploader);
+                const safeRealUploader = encodeURIComponent(uploaderName); // For admin trace
                 const timestamp = Date.now();
-                const newName = `${timestamp}___${safeUploader}___${safeOriginal}`;
-                
+                const newName = `${timestamp}___${safeDisplayUploader}___${safeOriginal}___${safeRealUploader}`;
+
                 const { error } = await supabaseClient.storage.from('gallery-images').upload(newName, file, {
                     cacheControl: '3600',
                     upsert: false
                 });
-                
+
                 if (error) throw error;
-                
+
                 uploadModal.classList.add('hidden');
                 uploadForm.reset();
-                
+
                 // Immediately reload gallery batch from top
                 loadGalleryBatch(true);
             } catch (err) {
