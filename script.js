@@ -850,138 +850,250 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const renderGalleryImages = async () => {
+    let galleryOffset = 0;
+    const GALLERY_LIMIT = 30;
+    let fetchingGallery = false;
+    let hasMoreGallery = true;
+    const imageUrls = [];
+    let currentLightboxIndex = 0;
+
+    const loadGalleryBatch = async (reset = false) => {
         const placeholder = document.querySelector('#gallery-placeholder');
         const container = document.querySelector('#gallery-container');
+        if (!container || !supabaseClient) return;
 
-        const lightboxModal = document.getElementById('lightbox-modal');
-        const lightboxImage = document.getElementById('lightbox-image');
-        const lightboxCloseBtn = document.getElementById('lightbox-close');
-        const lightboxPrevBtn = document.getElementById('lightbox-prev');
-        const lightboxNextBtn = document.getElementById('lightbox-next');
-
-        if (!container || !placeholder || !lightboxModal) return;
-
-        if (!supabaseClient) {
-            placeholder.innerHTML = `<div class="error-message"><h2 class="text-2xl font-bold">Error: Supabase Not Ready</h2></div>`;
-            return;
+        if (reset) {
+            galleryOffset = 0;
+            hasMoreGallery = true;
+            imageUrls.length = 0;
+            container.innerHTML = '';
+            
+            // Show skeletons
+            container.innerHTML = `<div id="gallery-skeletons" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full col-span-full">${Array.from({ length: 8 }, () => `<div class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] animate-pulse w-full"><div class="h-48 md:h-64 bg-gray-300 dark:bg-gray-700 rounded-lg"></div></div>`).join('')}</div>`;
+            placeholder.classList.add('hidden');
+            container.classList.remove('hidden');
         }
 
-        // Hide "Coming Soon" placeholder and reveal container strictly BEFORE fetch
-        placeholder.classList.add('hidden');
-        container.classList.remove('hidden');
+        if (fetchingGallery || !hasMoreGallery) return;
+        fetchingGallery = true;
 
-        // Show skeleton loading
-        container.innerHTML = `
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full col-span-full">
-                ${Array.from({ length: 8 }, () => `
-                    <div class="bg-[var(--card-bg)] rounded-lg shadow-md border border-[var(--border-color)] animate-pulse w-full">
-                        <div class="h-48 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        const BUCKET_NAME = 'gallery-images';
+        const skeletonEl = document.getElementById('gallery-skeletons');
 
         try {
-            const { data: files, error } = await fetchWithRetry(() =>
-                supabaseClient.storage.from(BUCKET_NAME).list('', {
-                    sortBy: { column: 'created_at', order: 'desc' }
-                })
-            );
+            const { data: files, error } = await supabaseClient.storage.from('gallery-images').list('', {
+                limit: GALLERY_LIMIT,
+                offset: galleryOffset,
+                sortBy: { column: 'created_at', order: 'desc' }
+            });
 
             if (error) throw error;
-
+            
             const imageFiles = files?.filter(file => {
                 const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
                 return allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
             });
 
+            if (reset && skeletonEl) {
+                skeletonEl.remove();
+            }
+
             if (!imageFiles || imageFiles.length === 0) {
-                container.classList.add('hidden');
-                placeholder.classList.remove('hidden');
+                hasMoreGallery = false;
+                if (reset) {
+                    container.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                }
                 return;
             }
 
-            // Successfully fetched; clear skeleton array before injecting
-            container.innerHTML = '';
+            if (imageFiles.length < GALLERY_LIMIT) {
+                hasMoreGallery = false;
+            }
 
-            const imageUrls = [];
-            let currentIndex = 0;
-
-            imageFiles.forEach((file, index) => {
-                const { data: publicUrlData } = supabaseClient.storage.from(BUCKET_NAME).getPublicUrl(file.name);
-
+            imageFiles.forEach((file) => {
+                const { data: publicUrlData } = supabaseClient.storage.from('gallery-images').getPublicUrl(file.name);
                 if (publicUrlData.publicUrl) {
+                    let uploaderName = "mshoaibkhan0988@gmail.com"; // Default for legacy images
+                    const nameParts = file.name.split('___');
+                    if (nameParts.length >= 3) {
+                        uploaderName = decodeURIComponent(nameParts[1]); // the custom uploader
+                    }
+
+                    const currentIndex = imageUrls.length;
                     imageUrls.push(publicUrlData.publicUrl);
 
                     const imageElement = document.createElement('div');
-                    imageElement.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden border border-[var(--border-color)] hover-lift fade-in';
-                    imageElement.innerHTML = `
-                        <img data-src="${publicUrlData.publicUrl}" alt="Gallery thumbnail" class="lazy w-full h-48 object-contain transition-transform duration-300 cursor-pointer">
-                    `;
-                    imageElement.querySelector('img').addEventListener('click', () => {
-                        currentIndex = index;
-                        showImageAtIndex(currentIndex);
+                    imageElement.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden border border-[var(--border-color)] hover-lift fade-in relative group cursor-pointer';
+                    imageElement.innerHTML = `<img data-src="${publicUrlData.publicUrl}" alt="Gallery thumbnail" class="lazy w-full h-48 md:h-64 object-cover transition-transform duration-300 group-hover:scale-105">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity flex items-end">
+                            <p class="text-xs md:text-sm text-white font-medium truncate w-full drop-shadow-md">By: ${uploaderName}</p>
+                        </div>`;
+                    
+                    imageElement.addEventListener('click', () => {
+                        const lightboxImage = document.getElementById('lightbox-image');
+                        const lightboxModal = document.getElementById('lightbox-modal');
+                        currentLightboxIndex = currentIndex;
+                        lightboxImage.src = imageUrls[currentIndex];
+                        lightboxModal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
                     });
+                    
                     container.appendChild(imageElement);
                 }
             });
 
-            function showImageAtIndex(index) {
-                lightboxImage.src = imageUrls[index];
-                lightboxModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
+            galleryOffset += GALLERY_LIMIT;
+            
+            // Call generic lazy loader for new images
+            if (typeof setupLazyLoading === 'function') {
+                setupLazyLoading(); 
             }
 
-            function showNextImage() {
-                currentIndex = (currentIndex + 1) % imageUrls.length;
-                showImageAtIndex(currentIndex);
-            }
-
-            function showPrevImage() {
-                currentIndex = (currentIndex - 1 + imageUrls.length) % imageUrls.length;
-                showImageAtIndex(currentIndex);
-            }
-
-            lightboxNextBtn.addEventListener('click', showNextImage);
-            lightboxPrevBtn.addEventListener('click', showPrevImage);
-
-            const closeLightbox = () => {
-                lightboxModal.classList.add('hidden');
-                lightboxImage.src = "";
-                document.body.style.overflow = 'auto';
-            };
-
-            lightboxCloseBtn.addEventListener('click', closeLightbox);
-            lightboxModal.addEventListener('click', (e) => {
-                if (e.target === lightboxModal) {
-                    closeLightbox();
-                }
-            });
-
-            document.addEventListener('keydown', (e) => {
-                if (!lightboxModal.classList.contains('hidden')) {
-                    if (e.key === 'ArrowRight') {
-                        showNextImage();
-                    } else if (e.key === 'ArrowLeft') {
-                        showPrevImage();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
+            if (hasMoreGallery) {
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        observer.disconnect();
+                        const scrollSpinner = document.createElement('div');
+                        scrollSpinner.className = 'col-span-full py-4 flex justify-center text-[var(--accent-color)]';
+                        scrollSpinner.innerHTML = `<svg class="animate-spin h-8 w-8" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+                        container.appendChild(scrollSpinner);
+                        
+                        loadGalleryBatch().then(() => {
+                            if (scrollSpinner.parentNode) scrollSpinner.remove();
+                        });
                     }
+                }, { threshold: 0.1 });
+                // attach to last child
+                if (container.lastElementChild) {
+                    observer.observe(container.lastElementChild);
                 }
-            });
+            }
 
-            // Initialize lazy loading for gallery images
-            setupLazyLoading();
-
-        } catch (error) {
-            console.error("Error fetching gallery images:", error);
-            placeholder.classList.remove('hidden');
-            container.classList.add('hidden');
-            placeholder.innerHTML = `<div class="error-message"><h2 class="text-2xl font-bold">Could not load images</h2></div>`;
+        } catch (err) {
+            console.error(err);
+        } finally {
+            fetchingGallery = false;
         }
+    };
+
+    const setupLightboxListeners = () => {
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const lightboxCloseBtn = document.getElementById('lightbox-close');
+        const lightboxPrevBtn = document.getElementById('lightbox-prev');
+        const lightboxNextBtn = document.getElementById('lightbox-next');
+        const lightboxImage = document.getElementById('lightbox-image');
+        
+        if(!lightboxModal || !lightboxCloseBtn) return;
+
+        const showNext = () => {
+            currentLightboxIndex = (currentLightboxIndex + 1) % imageUrls.length;
+            if(imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
+        };
+        const showPrev = () => {
+            currentLightboxIndex = (currentLightboxIndex - 1 + imageUrls.length) % imageUrls.length;
+            if(imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
+        };
+        const close = () => {
+            lightboxModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            lightboxImage.src = "";
+        };
+
+        // remove old clones if any (to prevent multiple bindings)
+        const closeClone = lightboxCloseBtn.cloneNode(true);
+        lightboxCloseBtn.parentNode.replaceChild(closeClone, lightboxCloseBtn);
+        closeClone.addEventListener('click', close);
+        
+        const nextClone = lightboxNextBtn.cloneNode(true);
+        lightboxNextBtn.parentNode.replaceChild(nextClone, lightboxNextBtn);
+        nextClone.addEventListener('click', showNext);
+        
+        const prevClone = lightboxPrevBtn.cloneNode(true);
+        lightboxPrevBtn.parentNode.replaceChild(prevClone, lightboxPrevBtn);
+        prevClone.addEventListener('click', showPrev);
+
+        lightboxModal.addEventListener('click', (e) => { if(e.target === lightboxModal) close(); });
+        
+        document.addEventListener('keydown', (e) => {
+            if(!lightboxModal.classList.contains('hidden')) {
+                if(e.key === 'ArrowRight') showNext();
+                if(e.key === 'ArrowLeft') showPrev();
+                if(e.key === 'Escape') close();
+            }
+        });
+    }
+
+    const renderGalleryImages = () => {
+        if (!document.getElementById('gallery-container')) return;
+        setupLightboxListeners();
+        loadGalleryBatch(true);
+    };
+
+    const initGalleryUpload = () => {
+        const uploadBtn = document.getElementById('gallery-upload-btn');
+        const uploadModal = document.getElementById('gallery-upload-modal');
+        const uploadClose = document.getElementById('gallery-upload-close');
+        const uploadForm = document.getElementById('gallery-upload-form');
+        
+        if (!uploadBtn) return;
+        
+        uploadBtn.addEventListener('click', async () => {
+            if (!supabaseClient) return;
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                alert("Please sign in to upload images!");
+                // redirect to login form (assuming it's available via mobile auth btn or similar)
+                document.getElementById('logout-btn-mobile')?.click();
+                return;
+            }
+            uploadModal.classList.remove('hidden');
+        });
+        
+        uploadClose.addEventListener('click', () => {
+            uploadModal.classList.add('hidden');
+        });
+        
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('gallery-file-input');
+            const anonymousCheck = document.getElementById('gallery-anonymous-check');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const submitBtn = uploadForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Uploading...';
+            
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                let uploaderName = user?.user_metadata?.full_name || user?.email || 'Student';
+                if (anonymousCheck.checked) uploaderName = 'Anonymous';
+                
+                const safeOriginal = file.name.replace(/[^a-zA-Z0-9.\-]/g, '_');
+                const safeUploader = encodeURIComponent(uploaderName);
+                const timestamp = Date.now();
+                const newName = `${timestamp}___${safeUploader}___${safeOriginal}`;
+                
+                const { error } = await supabaseClient.storage.from('gallery-images').upload(newName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+                
+                if (error) throw error;
+                
+                uploadModal.classList.add('hidden');
+                uploadForm.reset();
+                
+                // Immediately reload gallery batch from top
+                loadGalleryBatch(true);
+            } catch (err) {
+                alert("Upload failed: " + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
     };
 
     // --- CALENDAR ENHANCEMENTS ---
@@ -1432,6 +1544,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRestaurantCards();
         renderAnnouncements();
         renderGalleryImages();
+        initGalleryUpload();
         enhanceCalendar();
         setupSearch();
         setupLazyLoading();
