@@ -270,12 +270,12 @@
             switchToLoginLink.addEventListener('click', switchToLogin);
 
             allPasswordToggles.forEach(btn => {
-                // Remove pointer events from children so click fires firmly on button
                 btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const toggleBtn = e.currentTarget;
-                    const passwordInput = toggleBtn.previousElementSibling;
+                    // Find the input element anywhere within the common parent wrapper
+                    const passwordInput = toggleBtn.parentElement.querySelector('input');
                     const eyeOpen = toggleBtn.querySelector('.eye-open');
                     const eyeSlashed = toggleBtn.querySelector('.eye-slashed');
 
