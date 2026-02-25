@@ -93,7 +93,7 @@
                                 required=""
                                 class="appearance-none rounded-none relative block w-full pl-3 pr-10 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-b-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
                                 placeholder="Password">
-                            <button type="button"
+                            <button type="button" onclick="togglePassword(this)"
                                 class="password-toggle absolute inset-y-0 right-0 px-3 flex items-center text-sm leading-5 z-20 cursor-pointer hover:text-[var(--accent-color)] transition-colors">
                                 <svg class="h-6 w-6 text-gray-400 eye-slashed pointer-events-none" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +183,7 @@
                                 required=""
                                 class="appearance-none rounded-none relative block w-full pl-3 pr-10 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-b-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
                                 placeholder="Password">
-                            <button type="button"
+                            <button type="button" onclick="togglePassword(this)"
                                 class="password-toggle absolute inset-y-0 right-0 px-3 flex items-center text-sm leading-5 z-20 cursor-pointer hover:text-[var(--accent-color)] transition-colors">
                                 <svg class="h-6 w-6 text-gray-400 eye-slashed pointer-events-none" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -269,28 +269,24 @@
             switchToSignupLink.addEventListener('click', switchToSignup);
             switchToLoginLink.addEventListener('click', switchToLogin);
 
-            allPasswordToggles.forEach(btn => {
-                btn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const toggleBtn = e.currentTarget;
-                    // Find the input element anywhere within the common parent wrapper
-                    const passwordInput = toggleBtn.parentElement.querySelector('input');
-                    const eyeOpen = toggleBtn.querySelector('.eye-open');
-                    const eyeSlashed = toggleBtn.querySelector('.eye-slashed');
-
-                    if (passwordInput && passwordInput.type === 'password') {
-                        passwordInput.type = 'text';
-                        if (eyeOpen) eyeOpen.classList.remove('hidden');
-                        if (eyeSlashed) eyeSlashed.classList.add('hidden');
-                    } else if (passwordInput) {
-                        passwordInput.type = 'password';
-                        if (eyeSlashed) eyeSlashed.classList.remove('hidden');
-                        if (eyeOpen) eyeOpen.classList.add('hidden');
-                    }
-                });
-            });
         });
+
+        // Global function to toggle password to bypass any listener unbinding or event issues
+        window.togglePassword = function (btn) {
+            const passwordInput = btn.parentElement.querySelector('input');
+            const eyeOpen = btn.querySelector('.eye-open');
+            const eyeSlashed = btn.querySelector('.eye-slashed');
+
+            if (passwordInput && passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                if (eyeOpen) eyeOpen.classList.remove('hidden');
+                if (eyeSlashed) eyeSlashed.classList.add('hidden');
+            } else if (passwordInput) {
+                passwordInput.type = 'password';
+                if (eyeSlashed) eyeSlashed.classList.remove('hidden');
+                if (eyeOpen) eyeOpen.classList.add('hidden');
+            }
+        };
     </script>
     <script src="auth.js"></script>
 
