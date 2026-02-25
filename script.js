@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const currentIndex = imageUrls.length;
-                    imageUrls.push(publicUrlData.publicUrl);
+                    imageUrls.push({ url: publicUrlData.publicUrl, name: uploaderName });
 
                     const imageElement = document.createElement('div');
                     imageElement.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden border border-[var(--border-color)] hover-lift fade-in relative group cursor-pointer';
@@ -932,8 +932,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     imageElement.addEventListener('click', () => {
                         const lightboxImage = document.getElementById('lightbox-image');
                         const lightboxModal = document.getElementById('lightbox-modal');
+                        const lightboxName = document.getElementById('lightbox-uploader-name');
                         currentLightboxIndex = currentIndex;
-                        lightboxImage.src = imageUrls[currentIndex];
+                        lightboxImage.src = imageUrls[currentIndex].url;
+                        if (lightboxName) lightboxName.textContent = 'By: ' + imageUrls[currentIndex].name;
                         lightboxModal.classList.remove('hidden');
                         document.body.style.overflow = 'hidden';
                     });
@@ -982,21 +984,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const lightboxPrevBtn = document.getElementById('lightbox-prev');
         const lightboxNextBtn = document.getElementById('lightbox-next');
         const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxName = document.getElementById('lightbox-uploader-name');
 
         if (!lightboxModal || !lightboxCloseBtn) return;
 
+        const updateLightboxContent = () => {
+            const currentItem = imageUrls[currentLightboxIndex];
+            if (currentItem) {
+                lightboxImage.src = currentItem.url;
+                if (lightboxName) lightboxName.textContent = 'By: ' + currentItem.name;
+            }
+        };
+
         const showNext = () => {
             currentLightboxIndex = (currentLightboxIndex + 1) % imageUrls.length;
-            if (imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
+            updateLightboxContent();
         };
         const showPrev = () => {
             currentLightboxIndex = (currentLightboxIndex - 1 + imageUrls.length) % imageUrls.length;
-            if (imageUrls[currentLightboxIndex]) lightboxImage.src = imageUrls[currentLightboxIndex];
+            updateLightboxContent();
         };
         const close = () => {
             lightboxModal.classList.add('hidden');
             document.body.style.overflow = 'auto';
             lightboxImage.src = "";
+            if (lightboxName) lightboxName.textContent = "";
         };
 
         // remove old clones if any (to prevent multiple bindings)
@@ -1116,8 +1128,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- GEMINI API FEATURES ---
-    const callGeminiAPI = async (userQuery, systemPrompt, retries = 3, delay = 1000) => {
-        const API_KEY = 'AIzaSyAMOVgh4qSDaB7H1rIagnWtvj6cjJ6gPbI';
+    const callGeminiAPI = async (userQuery, systemPrompt, appType = 'circute', retries = 3, delay = 1000) => {
+        // Obfuscated keys to prevent basic bot scraping
+        const k1 = atob('QUl6YVN5RGxTZ0I1VlI3b3kzbzJ3Ni1YR0xGdGF5amRscENYajQw'); // Circute AI
+        const k2 = atob('QUl6YVN5Q09xTkp5Z0s1T1U2ZUs3dG9rLXdGWGEtTkJOY3l4QVlR'); // Email Writer
+        const API_KEY = appType === 'email' ? k2 : k1;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
         const payload = {
@@ -1141,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 if (response.status === 429 && retries > 0) {
                     await new Promise(res => setTimeout(res, delay));
-                    return callGeminiAPI(userQuery, systemPrompt, retries - 1, delay * 2);
+                    return callGeminiAPI(userQuery, systemPrompt, appType, retries - 1, delay * 2);
                 }
                 const errorData = await response.json();
                 throw new Error(`API request failed with status ${response.status}: ${errorData.error?.message || 'Unknown error'}`);
@@ -1207,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const systemPrompt = "You are a friendly and encouraging AI tutor for first-year engineering students at MIT Manipal. Your name is 'Circute'. Your goal is to help students understand complex topics by breaking them down into simple, easy-to-understand explanations. Avoid overly technical jargon. Use analogies and real-world examples where possible. Keep your responses concise and focused on the student's question. When asked for practice problems, provide one and then offer to provide the solution.";
 
             try {
-                const aiResponse = await callGeminiAPI(userQuery, systemPrompt);
+                const aiResponse = await callGeminiAPI(userQuery, systemPrompt, 'circute');
                 addMessageToChat(aiResponse, 'ai');
             } catch (error) {
                 addMessageToChat("Sorry, I'm having trouble responding right now. Please try again later.", 'ai');
@@ -1317,7 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const systemPrompt = `You are an AI assistant helping a first-year engineering student ('${fromName}') draft a professional and respectful email to their professor. Given the recipient's name, the subject, and the core message, write a complete email body. Start with a polite salutation (e.g., 'Dear Prof. [Name],'), write the body based on the student's prompt, and end with a professional closing (e.g., 'Sincerely,', 'Best regards,'). The closing should be followed by the student's name on one line, and their registration number on the next line. The tone should be formal yet courteous. For example, the closing should look like:\n\nBest regards,\n${fromName}\nReg. No.: ${regNo}`;
 
             try {
-                const aiResponse = await callGeminiAPI(fullPrompt, systemPrompt);
+                const aiResponse = await callGeminiAPI(fullPrompt, systemPrompt, 'email');
                 modalEmailBody.value = aiResponse;
             } catch (error) {
                 modalEmailBody.value = "Sorry, there was an error generating the email. Please try again.";
@@ -1538,6 +1553,204 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTodos();
     };
 
+    // --- STUDY MATERIAL LOGIC ---
+    let currentStudySubject = 'All';
+    let allStudyMaterials = [];
+
+    const renderStudyMaterials = async () => {
+        const container = document.getElementById('study-container');
+        const placeholder = document.getElementById('study-placeholder');
+        const filterBtns = document.querySelectorAll('#study-material-filters .filter-btn');
+        if (!container || !placeholder) return;
+
+        // Fetch data
+        if (!supabaseClient) return;
+
+        try {
+            const { data, error } = await supabaseClient.storage.from('study-materials').list('', {
+                limit: 100,
+                offset: 0,
+                sortBy: { column: 'created_at', order: 'desc' }
+            });
+
+            if (error) throw error;
+
+            allStudyMaterials = data.filter(file => file.name !== '.emptyFolderPlaceholder');
+
+            // Handle filter clicks
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => {
+                        b.classList.remove('active', 'bg-[var(--accent-color)]', 'text-white');
+                        b.classList.add('bg-[var(--bg-color)]', 'text-[var(--text-color)]');
+                    });
+                    btn.classList.add('active', 'bg-[var(--accent-color)]', 'text-white');
+                    btn.classList.remove('bg-[var(--bg-color)]', 'text-[var(--text-color)]');
+                    currentStudySubject = btn.dataset.subject;
+                    displayStudyMaterials();
+                });
+            });
+
+            const displayStudyMaterials = () => {
+                container.innerHTML = '';
+
+                const filteredMaterials = currentStudySubject === 'All'
+                    ? allStudyMaterials
+                    : allStudyMaterials.filter(file => {
+                        const parts = file.name.split('___');
+                        return parts.length >= 5 && decodeURIComponent(parts[1]) === currentStudySubject;
+                    });
+
+                if (filteredMaterials.length === 0) {
+                    placeholder.classList.remove('hidden');
+                    container.classList.add('hidden');
+                } else {
+                    placeholder.classList.add('hidden');
+                    container.classList.remove('hidden');
+
+                    filteredMaterials.forEach(file => {
+                        // Expected Filename Format: timestamp___subject___title___displayUploader___original___realUploader
+                        const parts = file.name.split('___');
+                        // if older/different format, just try to extract what we can
+                        let subject = 'General';
+                        let title = 'Document';
+                        let uploader = 'Unknown';
+
+                        if (parts.length >= 5) {
+                            subject = decodeURIComponent(parts[1]);
+                            title = decodeURIComponent(parts[2]);
+                            uploader = decodeURIComponent(parts[3]);
+                        } else {
+                            title = encodeURIComponent(file.name);
+                        }
+
+                        const publicUrlData = supabaseClient.storage.from('study-materials').getPublicUrl(file.name).data;
+                        const url = publicUrlData.publicUrl;
+
+                        const isImage = file.name.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+                        const isPdf = file.name.match(/\.(pdf)$/i);
+
+                        // Basic file icon determination
+                        let iconSvg = `<svg class="w-8 h-8 text-[var(--accent-color)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+                        if (isImage) {
+                            iconSvg = `<svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
+                        } else if (isPdf) {
+                            iconSvg = `<svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+                        }
+
+                        const card = document.createElement('a');
+                        card.href = url;
+                        card.target = "_blank";
+                        card.className = "flex items-start p-4 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl shadow-md hover:shadow-lg transition-transform hover:-translate-y-1 block cursor-pointer group";
+
+                        card.innerHTML = `
+                            <div class="flex-shrink-0 mr-4 mt-1 bg-[var(--bg-color)] p-3 rounded-lg group-hover:bg-[var(--border-color)] transition-colors">
+                                ${iconSvg}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-bold text-[var(--text-color)] truncate mb-1" title="${title}">${title}</h3>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-color)] text-white">${subject}</span>
+                                    <span class="text-xs text-gray-500 font-medium whitespace-nowrap"><svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${new Date(file.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p class="text-sm text-gray-400 truncate w-full">By: ${uploader}</p>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            };
+
+            // initial render
+            displayStudyMaterials();
+
+        } catch (error) {
+            console.error("Failed to fetch study materials:", error);
+            placeholder.innerHTML = `<h2 class="text-xl md:text-2xl font-bold text-red-500 opacity-75 text-center px-4">Failed to load materials. Please check your connection.</h2>`;
+            placeholder.classList.remove('hidden');
+        }
+    };
+
+    const initStudyUpload = () => {
+        const uploadBtn = document.getElementById('study-upload-btn');
+        const uploadModal = document.getElementById('study-upload-modal');
+        const uploadClose = document.getElementById('study-upload-close');
+        const uploadForm = document.getElementById('study-upload-form');
+
+        if (!uploadBtn || !uploadModal || !uploadClose || !uploadForm) return;
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!supabaseClient) return;
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                alert("Please sign in to upload study materials!");
+                document.getElementById('logout-btn-mobile')?.click();
+                return;
+            }
+            uploadModal.classList.remove('hidden');
+        });
+
+        uploadClose.addEventListener('click', () => {
+            uploadModal.classList.add('hidden');
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const subjectSelect = document.getElementById('study-subject-select');
+            const titleInput = document.getElementById('study-title-input');
+            const fileInput = document.getElementById('study-file-input');
+            const anonymousCheck = document.getElementById('study-anonymous-check');
+
+            const file = fileInput.files[0];
+            const subject = subjectSelect.value;
+            const title = titleInput.value.trim();
+
+            if (!file || !subject || !title) return;
+
+            const submitBtn = uploadForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Uploading...';
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                let uploaderName = user?.user_metadata?.full_name || user?.email || 'Student';
+                let displayUploader = uploaderName;
+                if (anonymousCheck.checked) displayUploader = 'Anonymous';
+
+                const safeOriginal = file.name.replace(/[^a-zA-Z0-9.\-]/g, '_');
+                const safeDisplayUploader = encodeURIComponent(displayUploader);
+                const safeRealUploader = encodeURIComponent(uploaderName);
+                const safeSubject = encodeURIComponent(subject);
+                const safeTitle = encodeURIComponent(title);
+                const timestamp = Date.now();
+                const newName = `${timestamp}___${safeSubject}___${safeTitle}___${safeDisplayUploader}___${safeOriginal}___${safeRealUploader}`;
+
+                const { error } = await supabaseClient.storage.from('study-materials').upload(newName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+                if (error) throw error;
+
+                uploadModal.classList.add('hidden');
+                uploadForm.reset();
+                renderStudyMaterials(); // Re-render to show new upload
+
+                // Optional: success message or custom toast could be added here
+                alert("Study material uploaded successfully!");
+
+            } catch (error) {
+                console.error("Study material upload error:", error);
+                alert("Failed to upload file. " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+    };
+
+
     // --- INITIALIZE ALL FEATURES ---
     const initializeApp = () => {
         renderDailyQuote();
@@ -1551,6 +1764,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSearch();
         setupLazyLoading();
         initTodoApp();
+        renderStudyMaterials();
+        initStudyUpload();
     };
 
     // Start the application
