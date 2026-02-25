@@ -93,7 +93,7 @@
                                 required=""
                                 class="appearance-none rounded-none relative block w-full pl-3 pr-10 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-b-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
                                 placeholder="Password">
-                            <button type="button" onclick="togglePassword(this)"
+                            <button type="button"
                                 class="password-toggle absolute inset-y-0 right-0 px-3 flex items-center text-sm leading-5 z-20 cursor-pointer hover:text-[var(--accent-color)] transition-colors">
                                 <svg class="h-6 w-6 text-gray-400 eye-slashed pointer-events-none" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +183,7 @@
                                 required=""
                                 class="appearance-none rounded-none relative block w-full pl-3 pr-10 py-3 border border-[var(--border-color)] bg-[var(--bg-color)] placeholder-gray-500 text-[var(--text-color)] rounded-b-md focus:outline-none focus:ring-[var(--accent-color)] focus:border-[var(--accent-color)] focus:z-10 sm:text-sm"
                                 placeholder="Password">
-                            <button type="button" onclick="togglePassword(this)"
+                            <button type="button"
                                 class="password-toggle absolute inset-y-0 right-0 px-3 flex items-center text-sm leading-5 z-20 cursor-pointer hover:text-[var(--accent-color)] transition-colors">
                                 <svg class="h-6 w-6 text-gray-400 eye-slashed pointer-events-none" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -271,11 +271,15 @@
 
         });
 
-        // Global function to toggle password to bypass any listener unbinding or event issues
-        window.togglePassword = function (btn) {
-            const passwordInput = btn.parentElement.querySelector('input');
-            const eyeOpen = btn.querySelector('.eye-open');
-            const eyeSlashed = btn.querySelector('.eye-slashed');
+        // Event delegation for password toggle for maximum robustness
+        document.addEventListener('click', function (e) {
+            const toggleBtn = e.target.closest('.password-toggle');
+            if (!toggleBtn) return;
+
+            e.preventDefault();
+            const passwordInput = toggleBtn.parentElement.querySelector('input');
+            const eyeOpen = toggleBtn.querySelector('.eye-open');
+            const eyeSlashed = toggleBtn.querySelector('.eye-slashed');
 
             if (passwordInput && passwordInput.type === 'password') {
                 passwordInput.type = 'text';
@@ -286,7 +290,7 @@
                 if (eyeSlashed) eyeSlashed.classList.remove('hidden');
                 if (eyeOpen) eyeOpen.classList.add('hidden');
             }
-        };
+        });
     </script>
     <script src="auth.js"></script>
 
