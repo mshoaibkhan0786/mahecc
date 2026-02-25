@@ -1639,9 +1639,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         const card = document.createElement('a');
-                        card.href = url;
-                        card.target = "_blank";
-                        card.className = "flex items-start p-4 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl shadow-md hover:shadow-lg transition-transform hover:-translate-y-1 block cursor-pointer group";
+                        // Use Javascript navigation to hide the URL from the browser's status bar/hover state
+                        card.href = "javascript:void(0);";
+                        card.onclick = (e) => { e.preventDefault(); window.open(url, '_blank', 'noopener,noreferrer'); };
+                        card.className = "flex items-start p-4 bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl shadow-md hover:shadow-lg transition-transform hover:-translate-y-1 block cursor-pointer group relative overflow-hidden";
 
                         card.innerHTML = `
                             <div class="flex-shrink-0 mr-4 mt-1 bg-[var(--bg-color)] p-3 rounded-lg group-hover:bg-[var(--border-color)] transition-colors">
