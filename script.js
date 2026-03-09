@@ -817,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         <div>
-                            <p class="text-sm">${ann.text}</p>
+                            <p class="text-sm whitespace-pre-wrap">${ann.text}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${postTime}</p>
                         </div>
                     </div>
@@ -1702,7 +1702,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileInput = document.getElementById('study-file-input');
             const anonymousCheck = document.getElementById('study-anonymous-check');
 
-            const file = fileInput.files[0];
+            let file = fileInput.files[0];
             const subject = subjectSelect.value;
             const title = titleInput.value.trim();
 
@@ -1713,7 +1713,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Uploading...';
 
+            const progressContainer = document.getElementById('study-upload-progress-container');
+            const progressBar = document.getElementById('study-upload-progress-bar');
+            const progressText = document.getElementById('study-upload-progress-text');
+            let progressInterval;
+
             try {
+                if (progressContainer) {
+                    progressContainer.classList.remove('hidden');
+                    progressBar.style.width = '10%';
+                    progressText.textContent = 'Preparing upload...';
+                }
+
+                // Compress image if applicable
+                if (file.type.startsWith('image/') && typeof imageCompression === 'function') {
+                    if (progressContainer) progressText.textContent = 'Compressing image...';
+                    const options = {
+                        maxSizeMB: 1.5,
+                        maxWidthOrHeight: 1920,
+                        useWebWorker: true,
+                        autoOrient: true
+                    };
+                    try {
+                        file = await imageCompression(file, options);
+                    } catch (compressionError) {
+                        console.warn("Image compression failed, using original file.", compressionError);
+                    }
+                }
+
+                if (progressContainer) {
+                    progressBar.style.width = '30%';
+                    progressText.textContent = 'Uploading to server...';
+                    let progress = 30;
+                    progressInterval = setInterval(() => {
+                        if (progress < 90) {
+                            progress += Math.random() * 5 + 2;
+                            if (progress > 90) progress = 90;
+                            progressBar.style.width = `${progress}%`;
+                        }
+                    }, 400);
+                }
+
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 let uploaderName = user?.user_metadata?.full_name || user?.email || 'Student';
                 let displayUploader = uploaderName;
@@ -1732,21 +1772,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     upsert: false
                 });
 
+                if (progressInterval) clearInterval(progressInterval);
+
                 if (error) throw error;
+
+                if (progressContainer) {
+                    progressBar.style.width = '100%';
+                    progressText.textContent = 'Upload complete!';
+                }
+
+                // Short delay to let user see "Upload complete!"
+                await new Promise(resolve => setTimeout(resolve, 600));
 
                 uploadModal.classList.add('hidden');
                 uploadForm.reset();
-                renderStudyMaterials(); // Re-render to show new upload
 
-                // Optional: success message or custom toast could be added here
-                alert("Study material uploaded successfully!");
+                // Optimistic UI Update: Prepend newly uploaded item to list instead of fresh fetch
+                const newMaterial = { name: newName, created_at: new Date().toISOString() };
+                allStudyMaterials.unshift(newMaterial);
+
+                // Trigger view update directly
+                const activeFilterBtn = document.querySelector('#study-material-filters .filter-btn.active') || document.querySelector('#study-material-filters .filter-btn');
+                if (activeFilterBtn) {
+                    activeFilterBtn.click();
+                } else {
+                    renderStudyMaterials();
+                }
 
             } catch (error) {
+                if (progressInterval) clearInterval(progressInterval);
                 console.error("Study material upload error:", error);
                 alert("Failed to upload file. " + error.message);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
+                if (progressContainer) {
+                    setTimeout(() => {
+                        progressContainer.classList.add('hidden');
+                        progressBar.style.width = '0%';
+                    }, 500);
+                }
             }
         });
     };
